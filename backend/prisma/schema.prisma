@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Coin {
+  id            String        @id @default(uuid())
+  objectId      String        @unique // Sui object ID
+  name          String
+  symbol        String
+  description   String?
+  creatorAddress String
+  supply        BigInt
+  price         Float
+  imageUrl      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  txId          String   @unique // Sui transaction ID
+  coinId        String
+  coin          Coin     @relation(fields: [coinId], references: [id])
+  type          String   // BUY, SELL, BURN
+  amount        BigInt
+  price         Float
+  walletAddress String
+  timestamp     DateTime @default(now())
+}

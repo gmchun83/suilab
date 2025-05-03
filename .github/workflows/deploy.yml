@@ -1,0 +1,147 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'testnet'
+        type: choice
+        options:
+          - testnet
+          - mainnet
+
+jobs:
+  deploy-contracts:
+    name: Deploy Smart Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Sui
+        run: |
+          curl -fsSL https://github.com/MystenLabs/sui/releases/download/devnet-v1.0.0/sui-ubuntu-x86_64 -o sui
+          chmod +x sui
+          sudo mv sui /usr/local/bin/sui
+      
+      - name: Setup Sui Config
+        run: |
+          mkdir -p ~/.sui
+          echo "${{ secrets.SUI_CONFIG }}" > ~/.sui/client.yaml
+      
+      - name: Deploy contracts
+        run: |
+          cd contracts
+          ENVIRONMENT=${{ github.event.inputs.environment || 'testnet' }}
+          ./scripts/deploy.sh --network $ENVIRONMENT
+      
+      - name: Save contract addresses
+        id: save-addresses
+        run: |
+          ENVIRONMENT=${{ github.event.inputs.environment || 'testnet' }}
+          PACKAGE_ID=$(cat contracts/deployed_$ENVIRONMENT.json | grep -o '"packageId": "[^"]*' | cut -d'"' -f4)
+          echo "PACKAGE_ID=$PACKAGE_ID" >> $GITHUB_ENV
+          echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+  
+  deploy-backend:
+    name: Deploy Backend
+    needs: deploy-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        run: cd backend && pnpm install
+      
+      - name: Build backend
+        run: cd backend && pnpm build
+      
+      - name: Update environment variables
+        run: |
+          ENVIRONMENT=${{ github.event.inputs.environment || 'testnet' }}
+          PACKAGE_ID=${{ needs.deploy-contracts.outputs.package_id }}
+          
+          # Update .env file with package ID
+          sed -i "s/PACKAGE_ID=.*/PACKAGE_ID=$PACKAGE_ID/g" backend/.env
+          
+          # Update other environment variables based on environment
+          if [ "$ENVIRONMENT" = "mainnet" ]; then
+            sed -i "s/SUI_RPC_URL=.*/SUI_RPC_URL=https:\/\/fullnode.mainnet.sui.io/g" backend/.env
+          else
+            sed -i "s/SUI_RPC_URL=.*/SUI_RPC_URL=https:\/\/fullnode.testnet.sui.io/g" backend/.env
+          fi
+      
+      - name: Deploy to AWS
+        run: |
+          # This is a placeholder for your actual deployment command
+          # Example: aws elasticbeanstalk deploy ...
+          echo "Deploying backend to AWS..."
+          echo "Using package ID: ${{ needs.deploy-contracts.outputs.package_id }}"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [deploy-contracts, deploy-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        run: cd frontend && pnpm install
+      
+      - name: Update environment variables
+        run: |
+          ENVIRONMENT=${{ github.event.inputs.environment || 'testnet' }}
+          PACKAGE_ID=${{ needs.deploy-contracts.outputs.package_id }}
+          
+          # Create .env file for frontend
+          echo "VITE_PACKAGE_ID=$PACKAGE_ID" > frontend/.env
+          
+          # Update RPC URL based on environment
+          if [ "$ENVIRONMENT" = "mainnet" ]; then
+            echo "VITE_SUI_RPC_URL=https://fullnode.mainnet.sui.io" >> frontend/.env
+          else
+            echo "VITE_SUI_RPC_URL=https://fullnode.testnet.sui.io" >> frontend/.env
+          fi
+          
+          # Add API URL
+          echo "VITE_API_URL=https://api.pumpsui.com/api" >> frontend/.env
+      
+      - name: Build frontend
+        run: cd frontend && pnpm build
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          vercel-args: ${{ github.event.inputs.environment == 'mainnet' && '--prod' || '' }}

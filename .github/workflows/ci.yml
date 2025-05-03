@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Lint frontend
+        run: cd frontend && pnpm lint
+      
+      - name: Lint backend
+        run: cd backend && pnpm lint
+  
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Test frontend
+        run: cd frontend && pnpm test
+      
+      - name: Test backend
+        run: cd backend && pnpm test
+  
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      
+      - name: Install dependencies
+        run: pnpm install
+      
+      - name: Build frontend
+        run: cd frontend && pnpm build
+      
+      - name: Build backend
+        run: cd backend && pnpm build
+  
+  move-test:
+    name: Move Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Sui
+        run: |
+          curl -fsSL https://github.com/MystenLabs/sui/releases/download/devnet-v1.0.0/sui-ubuntu-x86_64 -o sui
+          chmod +x sui
+          sudo mv sui /usr/local/bin/sui
+      
+      - name: Run Move tests
+        run: cd contracts && sui move test
