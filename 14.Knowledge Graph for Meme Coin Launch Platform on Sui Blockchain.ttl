@@ -1,0 +1,401 @@
+```turtle
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix mc: <http://example.org/memecoin/> .
+@prefix sui: <http://example.org/sui/> .
+@prefix tech: <http://example.org/technology/> .
+@prefix team: <http://example.org/team/> .
+@prefix doc: <http://example.org/documentation/> .
+@prefix phase: <http://example.org/phase/> .
+
+# Project
+mc:MemeCoinPlatform a mc:Project ;
+    rdfs:label "Meme Coin Launch Platform" ;
+    mc:hasDescription "A decentralized application on the Sui blockchain for creating, launching, and trading meme coins, inspired by Pump.fun." ;
+    mc:hasObjective "Deliver MVP within 12 weeks; ensure sub-second transaction confirmations; support 1,000 concurrent users; achieve WCAG 2.1 Level AA compliance." ;
+    mc:usesBlockchain sui:Sui ;
+    mc:hasTimeline "2025-05-05 to 2025-07-27" ;
+    mc:hasPhase phase:ProjectManagement, phase:EnvironmentSetup, phase:FrontendDevelopment, phase:SmartContractDevelopment, phase:BackendDevelopment, phase:Integrations, phase:Testing, phase:Documentation, phase:Deployment, phase:PostLaunchSupport .
+
+# Blockchain
+sui:Sui a sui:Blockchain ;
+    rdfs:label "Sui Blockchain" ;
+    sui:isLayer1 true ;
+    sui:usesLanguage tech:Move ;
+    sui:hasNativeToken sui:SUI ;
+    sui:supports mc:MemeCoinPlatform .
+
+sui:SUI a sui:Token ;
+    rdfs:label "SUI Token" ;
+    sui:isNativeTo sui:Sui .
+
+tech:Move a tech:ProgrammingLanguage ;
+    rdfs:label "Move" ;
+    tech:isUsedFor sui:SmartContract ;
+    tech:developedBy "Mysten Labs" .
+
+# Features
+mc:TokenCreation a mc:Feature ;
+    rdfs:label "Token Creation" ;
+    mc:hasDescription "Allows users to create meme coins with name, symbol, image, and supply." ;
+    mc:implementedIn phase:SmartContractDevelopment, phase:FrontendDevelopment ;
+    mc:usesContract mc:MemeCoinContract ;
+    mc:integratesWith sui:SuiWallet .
+
+mc:BondingCurveTrading a mc:Feature ;
+    rdfs:label "Bonding Curve Trading" ;
+    mc:hasDescription "Enables buying and selling meme coins with dynamic pricing via bonding curve." ;
+    mc:implementedIn phase:SmartContractDevelopment, phase:FrontendDevelopment ;
+    mc:usesContract mc:MemeCoinContract ;
+    mc:dependsOn mc:TokenCreation .
+
+mc:LiquidityPoolSetup a mc:Feature ;
+    rdfs:label "Automatic Liquidity Pool Setup" ;
+    mc:hasDescription "Automatically creates liquidity pools on Cetus DEX for meme coins." ;
+    mc:implementedIn phase:SmartContractDevelopment, phase:Integrations ;
+    mc:usesContract mc:DEXIntegrationContract ;
+    mc:integratesWith mc:CetusDEX ;
+    mc:dependsOn mc:BondingCurveTrading .
+
+mc:CreatorDashboard a mc:Feature ;
+    rdfs:label "Creator Dashboard" ;
+    mc:hasDescription "Provides analytics and management tools for coin creators." ;
+    mc:implementedIn phase:FrontendDevelopment, phase:BackendDevelopment ;
+    mc:dependsOn mc:TokenCreation, mc:EventIndexing .
+
+mc:TrendingLeaderboard a mc:Feature ;
+    rdfs:label "Trending and Leaderboard" ;
+    mc:hasDescription "Displays trending coins and leaderboard based on market cap and volume." ;
+    mc:implementedIn phase:FrontendDevelopment, phase:BackendDevelopment ;
+    mc:dependsOn mc:EventIndexing .
+
+mc:BurnMechanics a mc:Feature ;
+    rdfs:label "Burn Mechanics" ;
+    mc:hasDescription "Allows users to burn meme coins to reduce total supply." ;
+    mc:implementedIn phase:SmartContractDevelopment ;
+    mc:usesContract mc:MemeCoinContract ;
+    mc:dependsOn mc:TokenCreation .
+
+mc:WalletIntegration a mc:Feature ;
+    rdfs:label "Wallet Integration" ;
+    mc:hasDescription "Enables users to connect Sui-compatible wallets for transactions." ;
+    mc:implementedIn phase:FrontendDevelopment, phase:Integrations ;
+    mc:integratesWith sui:SuiWallet ;
+    mc:usesTechnology tech:SuiWalletAdapter .
+
+# Components
+mc:Frontend a mc:Component ;
+    rdfs:label "Frontend" ;
+    mc:hasDescription "React.js-based user interface with TypeScript and Tailwind CSS." ;
+    mc:implements mc:TokenCreation, mc:BondingCurveTrading, mc:CreatorDashboard, mc:TrendingLeaderboard, mc:WalletIntegration ;
+    mc:usesTechnology tech:ReactJS, tech:TypeScript, tech:TailwindCSS, tech:SuiWalletAdapter ;
+    mc:developedIn phase:FrontendDevelopment ;
+    mc:deployedTo tech:Vercel ;
+    mc:requiresAccessibility "WCAG 2.1 Level AA" .
+
+mc:SmartContracts a mc:Component ;
+    rdfs:label "Smart Contracts" ;
+    mc:hasDescription "Move contracts for token creation, trading, burn, and DEX integration." ;
+    mc:implements mc:TokenCreation, mc:BondingCurveTrading, mc:BurnMechanics, mc:LiquidityPoolSetup ;
+    mc:usesTechnology tech:Move ;
+    mc:developedIn phase:SmartContractDevelopment ;
+    mc:deployedTo sui:Sui .
+
+mc:BackendIndexer a mc:Component ;
+    rdfs:label "Backend/Indexer" ;
+    mc:hasDescription "Optional Node.js backend and PostgreSQL indexer for event processing and APIs." ;
+    mc:implements mc:CreatorDashboard, mc:TrendingLeaderboard ;
+    mc:usesTechnology tech:NodeJS, tech:PostgreSQL, tech:Redis, tech:Prisma ;
+    mc:developedIn phase:BackendDevelopment ;
+    mc:deployedTo tech:AWS .
+
+mc:EventIndexing a mc:Feature ;
+    rdfs:label "Event Indexing" ;
+    mc:hasDescription "Indexes blockchain events (create, trade, burn) for analytics and APIs." ;
+    mc:implementedIn phase:BackendDevelopment ;
+    mc:usesTechnology tech:SuiWebSocketAPI ;
+    mc:dependsOn mc:SmartContracts .
+
+# Integrations
+sui:SuiWallet a sui:Wallet ;
+    rdfs:label "Sui Wallet" ;
+    sui:supports mc:WalletIntegration ;
+    sui:usesTechnology tech:SuiWalletAdapter .
+
+mc:CetusDEX a mc:DEX ;
+    rdfs:label "Cetus DEX" ;
+    mc:hasDescription "Decentralized exchange for liquidity pools and trading." ;
+    mc:supports mc:LiquidityPoolSetup ;
+    mc:usesTechnology tech:CetusSDK ;
+    mc:integratesWith mc:SmartContracts .
+
+# Technologies
+tech:ReactJS a tech:Framework ;
+    rdfs:label "React.js" ;
+    tech:usedIn mc:Frontend .
+
+tech:TypeScript a tech:ProgrammingLanguage ;
+    rdfs:label "TypeScript" ;
+    tech:usedIn mc:Frontend, mc:BackendIndexer .
+
+tech:TailwindCSS a tech:CSSFramework ;
+    rdfs:label "Tailwind CSS" ;
+    tech:usedIn mc:Frontend .
+
+tech:SuiWalletAdapter a tech:Library ;
+    rdfs:label "Sui Wallet Adapter" ;
+    tech:usedIn mc:Frontend ;
+    tech:enables mc:WalletIntegration .
+
+tech:NodeJS a tech:Runtime ;
+    rdfs:label "Node.js" ;
+    tech:usedIn mc:BackendIndexer .
+
+tech:PostgreSQL a tech:Database ;
+    rdfs:label "PostgreSQL" ;
+    tech:usedIn mc:BackendIndexer .
+
+tech:Redis a tech:Database ;
+    rdfs:label "Redis" ;
+    tech:usedIn mc:BackendIndexer .
+
+tech:Prisma a tech:ORM ;
+    rdfs:label "Prisma" ;
+    tech:usedIn mc:BackendIndexer .
+
+tech:SuiWebSocketAPI a tech:API ;
+    rdfs:label "Sui WebSocket API" ;
+    tech:usedIn mc:BackendIndexer ;
+    tech:enables mc:EventIndexing .
+
+tech:CetusSDK a tech:SDK ;
+    rdfs:label "Cetus SDK" ;
+    tech:usedIn mc:Integrations ;
+    tech:enables mc:LiquidityPoolSetup .
+
+tech:Vercel a tech:Platform ;
+    rdfs:label "Vercel" ;
+    tech:usedFor mc:Frontend ;
+    tech:supports phase:Deployment .
+
+tech:AWS a tech:Platform ;
+    rdfs:label "AWS" ;
+    tech:usedFor mc:BackendIndexer ;
+    tech:supports phase:Deployment .
+
+# Phases
+phase:ProjectManagement a phase:Phase ;
+    rdfs:label "Project Management" ;
+    phase:hasDescription "Oversees planning, coordination, and reporting." ;
+    phase:produces doc:SRS, doc:WBS, doc:ImplementationPlan, doc:StatusReports, doc:RiskLog ;
+    phase:duration "24 person-days" ;
+    phase:timeline "2025-05-05 to 2025-07-27" ;
+    phase:assignee team:ProjectManager .
+
+phase:EnvironmentSetup a phase:Phase ;
+    rdfs:label "Environment Setup" ;
+    phase:hasDescription "Configures development, testing, and deployment environments." ;
+    phase:produces doc:Repository, doc:CI-CDConfig, doc:EnvironmentGuide ;
+    phase:duration "12 person-days" ;
+    phase:timeline "2025-05-05 to 2025-05-16" ;
+    phase:assignee team:DevOpsEngineer, team:FrontendDeveloper .
+
+phase:FrontendDevelopment a phase:Phase ;
+    rdfs:label "Frontend Development" ;
+    phase:hasDescription "Builds React.js interface with wallet integration and UI screens." ;
+    phase:produces mc:Frontend ;
+    phase:duration "60 person-days" ;
+    phase:timeline "2025-05-19 to 2025-07-04" ;
+    phase:assignee team:FrontendDeveloper, team:UIUXDesigner ;
+    phase:dependsOn phase:EnvironmentSetup .
+
+phase:SmartContractDevelopment a phase:Phase ;
+    rdfs:label "Smart Contract Development" ;
+    phase:hasDescription "Develops Move contracts for core functionality." ;
+    phase:produces mc:SmartContracts ;
+    phase:duration "50 person-days" ;
+    phase:timeline "2025-05-19 to 2025-06-27" ;
+    phase:assignee team:SmartContractDeveloper ;
+    phase:dependsOn phase:EnvironmentSetup .
+
+phase:BackendDevelopment a phase:Phase ;
+    rdfs:label "Backend/Indexer Development" ;
+    phase:hasDescription "Builds Node.js backend and indexer for APIs and event processing." ;
+    phase:produces mc:BackendIndexer ;
+    phase:duration "40 person-days" ;
+    phase:timeline "2025-05-19 to 2025-06-27" ;
+    phase:assignee team:BackendDeveloper ;
+    phase:dependsOn phase:EnvironmentSetup, phase:SmartContractDevelopment .
+
+phase:Integrations a phase:Phase ;
+    rdfs:label "Integrations" ;
+    phase:hasDescription "Integrates with Sui blockchain and Cetus DEX." ;
+    phase:produces mc:WalletIntegration, mc:LiquidityPoolSetup ;
+    phase:duration "20 person-days" ;
+    phase:timeline "2025-06-09 to 2025-06-27" ;
+    phase:assignee team:FrontendDeveloper, team:BackendDeveloper ;
+    phase:dependsOn phase:FrontendDevelopment, phase:SmartContractDevelopment .
+
+phase:Testing a phase:Phase ;
+    rdfs:label "Testing" ;
+    phase:hasDescription "Validates functionality, security, performance, and usability." ;
+    phase:produces doc:TestReports ;
+    phase:duration "30 person-days" ;
+    phase:timeline "2025-06-30 to 2025-07-11" ;
+    phase:assignee team:QAEngineer, team:SecurityAuditor, team:UIUXDesigner ;
+    phase:dependsOn phase:FrontendDevelopment, phase:SmartContractDevelopment, phase:BackendDevelopment .
+
+phase:Documentation a phase:Phase ;
+    rdfs:label "Documentation" ;
+    phase:hasDescription "Creates developer and user documentation." ;
+    phase:produces doc:README, doc:APIDocs, doc:UserGuide, doc:FAQs ;
+    phase:duration "15 person-days" ;
+    phase:timeline "2025-07-07 to 2025-07-11" ;
+    phase:assignee team:ProjectManager, team:BackendDeveloper, team:UIUXDesigner ;
+    phase:dependsOn phase:FrontendDevelopment, phase:BackendDevelopment .
+
+phase:Deployment a phase:Phase ;
+    rdfs:label "Deployment" ;
+    phase:hasDescription "Deploys application to Sui mainnet, Vercel, and AWS." ;
+    phase:produces mc:DeployedApplication ;
+    phase:duration "15 person-days" ;
+    phase:timeline "2025-07-14 to 2025-07-28" ;
+    phase:assignee team:SmartContractDeveloper, team:FrontendDeveloper, team:BackendDeveloper, team:DevOpsEngineer ;
+    phase:dependsOn phase:Testing .
+
+phase:PostLaunchSupport a phase:Phase ;
+    rdfs:label "Post-Launch Support" ;
+    phase:hasDescription "Monitors system, fixes bugs, and collects feedback." ;
+    phase:produces doc:FeedbackReport, doc:BugFixes ;
+    phase:duration "10 person-days" ;
+    phase:timeline "2025-07-28 to 2025-08-01" ;
+    phase:assignee team:DevOpsEngineer, team:AllDevelopers, team:ProjectManager ;
+    phase:dependsOn phase:Deployment .
+
+# Team
+team:ProjectManager a team:Role ;
+    rdfs:label "Project Manager" ;
+    team:responsibility "Oversees planning, coordination, and reporting." ;
+    team:effort "24 person-days" .
+
+team:FrontendDeveloper a team:Role ;
+    rdfs:label "Frontend Developer" ;
+    team:responsibility "Builds React.js interface and wallet integration." ;
+    team:count 2 ;
+    team:effort "60 person-days" .
+
+team:SmartContractDeveloper a team:Role ;
+    rdfs:label "Smart Contract Developer" ;
+    team:responsibility "Develops Move smart contracts." ;
+    team:count 2 ;
+    team:effort "50 person-days" .
+
+team:BackendDeveloper a team:Role ;
+    rdfs:label "Backend Developer" ;
+    team:responsibility "Builds Node.js backend and indexer." ;
+    team:effort "40 person-days" .
+
+team:QAEngineer a team:Role ;
+    rdfs:label "QA Engineer" ;
+    team:responsibility "Conducts unit, integration, and security testing." ;
+    team:effort "30 person-days" .
+
+team:UIUXDesigner a team:Role ;
+    rdfs:label "UI/UX Designer" ;
+    team:responsibility "Ensures accessibility and conducts usability testing." ;
+    team:effort "15 person-days" .
+
+team:DevOpsEngineer a team:Role ;
+    rdfs:label "DevOps Engineer" ;
+    team:responsibility "Configures environments and monitoring." ;
+    team:effort "12 person-days" .
+
+team:SecurityAuditor a team:Role ;
+    rdfs:label "Security Auditor" ;
+    team:responsibility "Audits smart contracts for vulnerabilities." ;
+    team:effort "5 person-days" ;
+    team:isExternal true .
+
+# Documentation
+doc:SRS a doc:Document ;
+    rdfs:label "Software Requirements Specification" ;
+    doc:producedIn phase:ProjectManagement .
+
+doc:WBS a doc:Document ;
+    rdfs:label "Work Breakdown Structure" ;
+    doc:producedIn phase:ProjectManagement .
+
+doc:ImplementationPlan a doc:Document ;
+    rdfs:label "Implementation Plan" ;
+    doc:producedIn phase:ProjectManagement .
+
+doc:StatusReports a doc:Document ;
+    rdfs:label "Status Reports" ;
+    doc:producedIn phase:ProjectManagement .
+
+doc:RiskLog a doc:Document ;
+    rdfs:label "Risk Log" ;
+    doc:producedIn phase:ProjectManagement .
+
+doc:Repository a doc:Artifact ;
+    rdfs:label "GitHub Repository" ;
+    doc:producedIn phase:EnvironmentSetup .
+
+doc:CI-CDConfig a doc:Artifact ;
+    rdfs:label "CI/CD Configuration" ;
+    doc:producedIn phase:EnvironmentSetup .
+
+doc:EnvironmentGuide a doc:Artifact ;
+    rdfs:label "Environment Setup Guide" ;
+    doc:producedIn phase:EnvironmentSetup .
+
+doc:TestReports a doc:Document ;
+    rdfs:label "Test Reports" ;
+    doc:producedIn phase:Testing ;
+    doc:includes "Unit Tests", "Integration Tests", "Security Audit", "Performance Tests", "Usability Tests" .
+
+doc:README a doc:Document ;
+    rdfs:label "README" ;
+    doc:producedIn phase:Documentation .
+
+doc:APIDocs a doc:Document ;
+    rdfs:label "API Documentation" ;
+    doc:producedIn phase:Documentation .
+
+doc:UserGuide a doc:Document ;
+    rdfs:label "User Guide" ;
+    doc:producedIn phase:Documentation .
+
+doc:FAQs a doc:Document ;
+    rdfs:label "FAQs" ;
+    doc:producedIn phase:Documentation .
+
+doc:FeedbackReport a doc:Document ;
+    rdfs:label "Feedback Report" ;
+    doc:producedIn phase:PostLaunchSupport .
+
+doc:BugFixes a doc:Artifact ;
+    rdfs:label "Bug Fixes" ;
+    doc:producedIn phase:PostLaunchSupport .
+
+# Contracts
+mc:MemeCoinContract a mc:SmartContract ;
+    rdfs:label "Meme Coin Contract" ;
+    mc:hasDescription "Handles token creation, trading, and burn mechanics." ;
+    mc:writtenIn tech:Move ;
+    mc:supports mc:TokenCreation, mc:BondingCurveTrading, mc:BurnMechanics .
+
+mc:DEXIntegrationContract a mc:SmartContract ;
+    rdfs:label "DEX Integration Contract" ;
+    mc:hasDescription "Manages liquidity pool setup on Cetus DEX." ;
+    mc:writtenIn tech:Move ;
+    mc:supports mc:LiquidityPoolSetup .
+
+# Deployed Application
+mc:DeployedApplication a mc:Artifact ;
+    rdfs:label "Deployed Application" ;
+    mc:hasDescription "Fully deployed Meme Coin Launch Platform on Sui mainnet, Vercel, and AWS." ;
+    mc:producedIn phase:Deployment ;
+    mc:includes mc:Frontend, mc:SmartContracts, mc:BackendIndexer .
+```
