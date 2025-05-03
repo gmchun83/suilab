@@ -153,3 +153,81 @@ export const getTrendingCoins = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch trending coins' })
   }
 }
+
+// Get leaderboard coins
+export const getLeaderboard = async (req: Request, res: Response) => {
+  try {
+    // Get query parameters
+    const sortBy = req.query.sortBy as string || 'marketCap'
+    const limit = parseInt(req.query.limit as string) || 10
+
+    // Try to get from cache first
+    const cacheKey = `leaderboard:${sortBy}:${limit}`
+    const cachedLeaderboard = await redisClient.get(cacheKey)
+
+    if (cachedLeaderboard) {
+      return res.json(JSON.parse(cachedLeaderboard))
+    }
+
+    // If not in cache, fetch from database
+    let orderBy: any = {}
+
+    // Determine sort field
+    switch (sortBy) {
+      case 'price':
+        orderBy = { price: 'desc' }
+        break
+      case 'volume24h':
+        // For volume, we'll use transaction count as a proxy
+        orderBy = {
+          transactions: {
+            _count: 'desc'
+          }
+        }
+        break
+      case 'marketCap':
+      default:
+        // For market cap, we'll sort by price (since we can't sort by calculated fields)
+        // and then calculate and re-sort in memory
+        orderBy = { price: 'desc' }
+        break
+    }
+
+    // Fetch coins
+    const coins = await prisma.coin.findMany({
+      orderBy,
+      take: limit * 2, // Fetch more than needed for market cap sorting
+      include: {
+        _count: {
+          select: {
+            transactions: true
+          }
+        }
+      }
+    })
+
+    // If sorting by market cap, calculate and re-sort
+    let leaderboardCoins = coins
+    if (sortBy === 'marketCap') {
+      leaderboardCoins = coins
+        .map(coin => ({
+          ...coin,
+          marketCap: BigInt(coin.supply) * BigInt(Math.floor(coin.price * 1000000)) // Approximate calculation
+        }))
+        .sort((a: any, b: any) => Number(b.marketCap - a.marketCap))
+        .slice(0, limit)
+    } else {
+      leaderboardCoins = coins.slice(0, limit)
+    }
+
+    // Store in cache
+    await redisClient.set(cacheKey, JSON.stringify(leaderboardCoins), {
+      EX: CACHE_TTL
+    })
+
+    res.json(leaderboardCoins)
+  } catch (error) {
+    logger.error('Error fetching leaderboard coins:', error)
+    res.status(500).json({ error: 'Failed to fetch leaderboard coins' })
+  }
+}

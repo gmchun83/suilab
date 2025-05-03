@@ -1,5 +1,5 @@
-import winston from 'winston'
-import path from 'path'
+const winston = require('winston')
+const path = require('path')
 
 // Define log format
 const logFormat = winston.format.combine(
@@ -8,7 +8,7 @@ const logFormat = winston.format.combine(
 )
 
 // Create logger
-export const logger = winston.createLogger({
+const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   format: logFormat,
   transports: [
@@ -28,4 +28,4 @@ export const logger = winston.createLogger({
   ]
 })
 
-export default logger
+module.exports = { logger, default: logger }

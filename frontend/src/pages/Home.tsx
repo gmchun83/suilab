@@ -5,6 +5,7 @@ import { fetchAllCoins } from '../store/slices/coinsSlice'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import TrendingCoins from '../components/TrendingCoins'
+import Leaderboard from '../components/Leaderboard'
 
 const Home: React.FC = () => {
   const dispatch = useDispatch()
@@ -34,7 +35,11 @@ const Home: React.FC = () => {
         <TrendingCoins />
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="mt-12">
+        <Leaderboard title="Top Coins by Market Cap" limit={5} sortBy="marketCap" />
+      </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
         <Card>
           <div className="text-center">
             <div className="h-12 w-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mx-auto mb-4">
