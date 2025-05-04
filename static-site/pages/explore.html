@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore meme coins on the Sui blockchain with PumpSui">
+  <title>Explore Coins - PumpSui</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230ea5e9' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/styles.css">
+  <!-- Add page-specific styles -->
+  <style>
+    .filter-section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-group {
+      margin-bottom: 1rem;
+    }
+    
+    .filter-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    .filter-select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+    }
+    
+    .coin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+    
+    .page-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin: 0 0.25rem;
+      border-radius: 0.375rem;
+      background-color: white;
+      color: #4b5563;
+      font-weight: 500;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    
+    .page-link.active {
+      background-color: #0ea5e9;
+      color: white;
+    }
+    
+    .page-link:hover:not(.active) {
+      background-color: #f3f4f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo">PumpSui</div>
+      <button id="mobile-menu-button" class="md:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      <nav id="mobile-menu" class="nav hidden md:flex">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="explore.html" class="nav-link active">Explore</a>
+        <a href="create.html" class="nav-link">Create</a>
+        <a href="portfolio.html" class="nav-link">Portfolio</a>
+        <a href="../index.html#contact" class="nav-link">Contact</a>
+      </nav>
+      <button class="btn btn-primary" id="connect-wallet-btn">Connect Wallet</button>
+    </header>
+
+    <section class="page-header">
+      <h1 class="text-3xl font-bold mb-4">Explore Meme Coins</h1>
+      <p class="text-gray-600 mb-8">Discover trending meme coins on the Sui blockchain</p>
+    </section>
+
+    <div class="filter-section">
+      <h2 class="text-xl font-bold mb-4">Filters</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="filter-group">
+          <label class="filter-label" for="sort-by">Sort By</label>
+          <select class="filter-select" id="sort-by">
+            <option value="market-cap-desc">Market Cap (High to Low)</option>
+            <option value="market-cap-asc">Market Cap (Low to High)</option>
+            <option value="volume-desc">Volume (High to Low)</option>
+            <option value="volume-asc">Volume (Low to High)</option>
+            <option value="price-change-desc">Price Change (High to Low)</option>
+            <option value="price-change-asc">Price Change (Low to High)</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="filter-label" for="price-range">Price Range</label>
+          <select class="filter-select" id="price-range">
+            <option value="all">All Prices</option>
+            <option value="under-0.0001">Under $0.0001</option>
+            <option value="0.0001-0.001">$0.0001 - $0.001</option>
+            <option value="0.001-0.01">$0.001 - $0.01</option>
+            <option value="over-0.01">Over $0.01</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label class="filter-label" for="market-cap">Market Cap</label>
+          <select class="filter-select" id="market-cap">
+            <option value="all">All Market Caps</option>
+            <option value="under-100k">Under $100K</option>
+            <option value="100k-1m">$100K - $1M</option>
+            <option value="1m-10m">$1M - $10M</option>
+            <option value="over-10m">Over $10M</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="mt-4">
+        <button class="btn btn-primary" id="apply-filters">Apply Filters</button>
+        <button class="btn btn-secondary ml-2" id="reset-filters">Reset</button>
+      </div>
+    </div>
+
+    <section class="coin-grid" id="coin-list">
+      <!-- Coin cards will be dynamically generated here -->
+    </section>
+
+    <div class="pagination" id="pagination">
+      <a href="#" class="page-link active">1</a>
+      <a href="#" class="page-link">2</a>
+      <a href="#" class="page-link">3</a>
+      <a href="#" class="page-link">4</a>
+      <a href="#" class="page-link">5</a>
+      <a href="#" class="page-link">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+      </a>
+    </div>
+
+    <footer class="footer">
+      <p>© 2023 PumpSui - Meme Coin Launch Platform</p>
+    </footer>
+  </div>
+  
+  <script src="../js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Sample coin data
+      const coins = [
+        {
+          name: 'DogeSui',
+          symbol: 'DOSU',
+          icon: 'DO',
+          price: 0.000123,
+          priceChange: 12.5,
+          marketCap: 123456,
+          volume: 12345
+        },
+        {
+          name: 'CatSui',
+          symbol: 'CASU',
+          icon: 'CA',
+          price: 0.000456,
+          priceChange: 8.3,
+          marketCap: 456789,
+          volume: 45678
+        },
+        {
+          name: 'PepeSui',
+          symbol: 'PESU',
+          icon: 'PE',
+          price: 0.000789,
+          priceChange: -3.2,
+          marketCap: 789123,
+          volume: 78912
+        },
+        {
+          name: 'ShibaSui',
+          symbol: 'SHSU',
+          icon: 'SH',
+          price: 0.000098,
+          priceChange: 5.7,
+          marketCap: 98765,
+          volume: 9876
+        },
+        {
+          name: 'MoonSui',
+          symbol: 'MOSU',
+          icon: 'MO',
+          price: 0.000076,
+          priceChange: -1.8,
+          marketCap: 76543,
+          volume: 7654
+        },
+        {
+          name: 'RocketSui',
+          symbol: 'ROSU',
+          icon: 'RO',
+          price: 0.000234,
+          priceChange: 15.2,
+          marketCap: 234567,
+          volume: 23456
+        },
+        {
+          name: 'StarSui',
+          symbol: 'STSU',
+          icon: 'ST',
+          price: 0.000345,
+          priceChange: 7.8,
+          marketCap: 345678,
+          volume: 34567
+        },
+        {
+          name: 'DiamondSui',
+          symbol: 'DISU',
+          icon: 'DI',
+          price: 0.000567,
+          priceChange: 9.4,
+          marketCap: 567890,
+          volume: 56789
+        },
+        {
+          name: 'GoldSui',
+          symbol: 'GOSU',
+          icon: 'GO',
+          price: 0.000678,
+          priceChange: -2.5,
+          marketCap: 678901,
+          volume: 67890
+        }
+      ];
+      
+      // Function to render coin cards
+      function renderCoins(coinList) {
+        const coinListElement = document.getElementById('coin-list');
+        coinListElement.innerHTML = '';
+        
+        coinList.forEach(coin => {
+          const card = document.createElement('div');
+          card.className = 'coin-card';
+          
+          const priceChangeClass = coin.priceChange >= 0 ? 'positive' : 'negative';
+          const priceChangeSymbol = coin.priceChange >= 0 ? '+' : '';
+          
+          card.innerHTML = `
+            <div class="coin-header">
+              <div class="coin-icon">${coin.icon}</div>
+              <div class="coin-info">
+                <div class="coin-name">${coin.name}</div>
+                <div class="coin-symbol">${coin.symbol}</div>
+              </div>
+              <div class="coin-price">
+                <div class="coin-price-value">$${coin.price.toFixed(6)}</div>
+                <div class="coin-price-change ${priceChangeClass}">${priceChangeSymbol}${coin.priceChange}%</div>
+              </div>
+            </div>
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 0.75rem; font-size: 0.875rem; color: #6b7280;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <span>Market Cap:</span>
+                <span>$${coin.marketCap.toLocaleString()}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Volume 24h:</span>
+                <span>$${coin.volume.toLocaleString()}</span>
+              </div>
+            </div>
+          `;
+          
+          coinListElement.appendChild(card);
+        });
+      }
+      
+      // Initial render
+      renderCoins(coins);
+      
+      // Filter functionality
+      document.getElementById('apply-filters').addEventListener('click', function() {
+        const sortBy = document.getElementById('sort-by').value;
+        const priceRange = document.getElementById('price-range').value;
+        const marketCap = document.getElementById('market-cap').value;
+        
+        let filteredCoins = [...coins];
+        
+        // Apply price range filter
+        if (priceRange !== 'all') {
+          switch (priceRange) {
+            case 'under-0.0001':
+              filteredCoins = filteredCoins.filter(coin => coin.price < 0.0001);
+              break;
+            case '0.0001-0.001':
+              filteredCoins = filteredCoins.filter(coin => coin.price >= 0.0001 && coin.price < 0.001);
+              break;
+            case '0.001-0.01':
+              filteredCoins = filteredCoins.filter(coin => coin.price >= 0.001 && coin.price < 0.01);
+              break;
+            case 'over-0.01':
+              filteredCoins = filteredCoins.filter(coin => coin.price >= 0.01);
+              break;
+          }
+        }
+        
+        // Apply market cap filter
+        if (marketCap !== 'all') {
+          switch (marketCap) {
+            case 'under-100k':
+              filteredCoins = filteredCoins.filter(coin => coin.marketCap < 100000);
+              break;
+            case '100k-1m':
+              filteredCoins = filteredCoins.filter(coin => coin.marketCap >= 100000 && coin.marketCap < 1000000);
+              break;
+            case '1m-10m':
+              filteredCoins = filteredCoins.filter(coin => coin.marketCap >= 1000000 && coin.marketCap < 10000000);
+              break;
+            case 'over-10m':
+              filteredCoins = filteredCoins.filter(coin => coin.marketCap >= 10000000);
+              break;
+          }
+        }
+        
+        // Apply sorting
+        switch (sortBy) {
+          case 'market-cap-desc':
+            filteredCoins.sort((a, b) => b.marketCap - a.marketCap);
+            break;
+          case 'market-cap-asc':
+            filteredCoins.sort((a, b) => a.marketCap - b.marketCap);
+            break;
+          case 'volume-desc':
+            filteredCoins.sort((a, b) => b.volume - a.volume);
+            break;
+          case 'volume-asc':
+            filteredCoins.sort((a, b) => a.volume - b.volume);
+            break;
+          case 'price-change-desc':
+            filteredCoins.sort((a, b) => b.priceChange - a.priceChange);
+            break;
+          case 'price-change-asc':
+            filteredCoins.sort((a, b) => a.priceChange - b.priceChange);
+            break;
+          case 'newest':
+            // In a real app, you would sort by creation date
+            // Here we'll just reverse the array as a placeholder
+            filteredCoins.reverse();
+            break;
+        }
+        
+        renderCoins(filteredCoins);
+      });
+      
+      // Reset filters
+      document.getElementById('reset-filters').addEventListener('click', function() {
+        document.getElementById('sort-by').value = 'market-cap-desc';
+        document.getElementById('price-range').value = 'all';
+        document.getElementById('market-cap').value = 'all';
+        
+        renderCoins(coins);
+      });
+      
+      // Pagination (simplified for demo)
+      const paginationLinks = document.querySelectorAll('.pagination .page-link');
+      paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Remove active class from all links
+          paginationLinks.forEach(l => l.classList.remove('active'));
+          
+          // Add active class to clicked link
+          this.classList.add('active');
+          
+          // In a real app, you would fetch the appropriate page of results
+          // For this demo, we'll just re-render the same coins
+          renderCoins(coins);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

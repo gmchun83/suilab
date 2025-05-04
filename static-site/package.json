@@ -1,0 +1,26 @@
+{
+  "name": "pumpsui-static-site",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "netlify dev",
+    "deploy": "netlify deploy",
+    "deploy:prod": "netlify deploy --prod",
+    "vercel-dev": "vercel dev",
+    "vercel-deploy": "vercel",
+    "vercel-deploy:prod": "vercel --prod"
+  },
+  "keywords": [
+    "meme-coin",
+    "sui",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Static landing page for PumpSui meme coin platform",
+  "devDependencies": {
+    "netlify-cli": "^20.1.1",
+    "vercel": "^41.7.0"
+  }
+}
