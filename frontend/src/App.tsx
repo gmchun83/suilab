@@ -1,58 +1,71 @@
-import { Routes, Route, Link } from 'react-router-dom'
-import Header from './components/Header'
-import Home from './pages/Home'
-import CreateCoin from './pages/CreateCoin'
-import CoinDetails from './pages/CoinDetails'
-import Explore from './pages/Explore'
-import Portfolio from './pages/Portfolio'
-import CreatorDashboard from './pages/CreatorDashboard'
-import WalletConnection from './pages/WalletConnection'
-import UserProfile from './pages/UserProfile'
-import About from './pages/About'
-import FAQ from './pages/FAQ'
-import Contact from './pages/Contact'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
+import { Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
+import { Header, Footer } from './components/layout';
+import routes from './config/routes';
+
+// Lazy load pages for better performance
+const Home = lazy(() => import('./pages/Home'));
+const CreateCoin = lazy(() => import('./pages/CreateCoin'));
+const CoinDetails = lazy(() => import('./pages/CoinDetails'));
+const Explore = lazy(() => import('./pages/Explore'));
+const Portfolio = lazy(() => import('./pages/Portfolio'));
+const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard'));
+const WalletConnection = lazy(() => import('./pages/WalletConnection'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+const About = lazy(() => import('./pages/About'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Terms = lazy(() => import('./pages/Terms'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+
+// Map component names to their imports
+const componentMap: Record<string, React.ComponentType<any>> = {
+  Home,
+  CreateCoin,
+  CoinDetails,
+  Explore,
+  Portfolio,
+  CreatorDashboard,
+  WalletConnection,
+  UserProfile,
+  About,
+  FAQ,
+  Contact,
+  Terms,
+  Privacy,
+};
+
+// Loading component for suspense fallback
+const Loading = () => (
+  <div className="flex justify-center items-center h-64">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+  </div>
+);
 
 function App() {
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container py-8">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreateCoin />} />
-          <Route path="/coins/:id" element={<CoinDetails />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/dashboard" element={<CreatorDashboard />} />
-          <Route path="/wallet" element={<WalletConnection />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-        </Routes>
+      <main className="container mx-auto py-8 flex-grow">
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {routes.map((route) => {
+              const Component = componentMap[route.component];
+              return (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={<Component />}
+                />
+              );
+            })}
+          </Routes>
+        </Suspense>
       </main>
-      <footer className="bg-gray-100 py-6">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-gray-600">© 2023 PumpSui - Meme Coin Launch Platform</p>
-            </div>
-            <div className="flex space-x-4">
-              <Link to="/about" className="text-gray-600 hover:text-primary-600">About</Link>
-              <Link to="/faq" className="text-gray-600 hover:text-primary-600">FAQ</Link>
-              <Link to="/contact" className="text-gray-600 hover:text-primary-600">Contact</Link>
-              <Link to="/terms" className="text-gray-600 hover:text-primary-600">Terms</Link>
-              <Link to="/privacy" className="text-gray-600 hover:text-primary-600">Privacy</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

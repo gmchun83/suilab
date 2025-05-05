@@ -1,9 +1,24 @@
-import express from 'express'
-import { getTransactionsByCoinId } from '../controllers/transactionsController'
-import rateLimitMiddleware from '../middleware/rateLimitMiddleware'
+import express from 'express';
+import {
+  getTransactionsByCoinId,
+  getTransactionById,
+  createTransaction,
+  getTransactionsByWalletAddress
+} from '../controllers/transactionsController';
+import {
+  validateCreateTransaction,
+  validatePagination
+} from '../validators';
+import { rateLimitMiddleware, authMiddleware } from '../middleware';
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/transactions/:coinId', rateLimitMiddleware, getTransactionsByCoinId)
+// Public routes
+router.get('/transactions/coin/:coinId', rateLimitMiddleware, validatePagination, getTransactionsByCoinId);
+router.get('/transactions/:id', rateLimitMiddleware, getTransactionById);
+router.get('/transactions/wallet/:walletAddress', rateLimitMiddleware, validatePagination, getTransactionsByWalletAddress);
 
-export default router
+// Protected routes (require authentication)
+router.post('/transactions', rateLimitMiddleware, authMiddleware, validateCreateTransaction, createTransaction);
+
+export default router;
