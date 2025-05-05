@@ -1,4 +1,4 @@
-import winston from 'winston';
+import * as winston from 'winston';
 import path from 'path';
 import fs from 'fs';
 import { LOGGING_CONFIG } from '../config';
@@ -13,7 +13,8 @@ if (!fs.existsSync(logDir)) {
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+  winston.format.printf((info) => {
+    const { timestamp, level, message, ...meta } = info;
     return `${timestamp} ${level}: ${message} ${Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''}`;
   })
 );

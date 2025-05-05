@@ -25,14 +25,14 @@ const prisma = new PrismaClient({
 
 // Log queries in development mode
 if (process.env.NODE_ENV === 'development') {
-  prisma.$on('query', (e) => {
+  prisma.$on('query', (e: any) => {
     logger.debug(`Query: ${e.query}`);
     logger.debug(`Duration: ${e.duration}ms`);
   });
 }
 
 // Log errors
-prisma.$on('error', (e) => {
+prisma.$on('error', (e: any) => {
   logger.error(`Prisma Error: ${e.message}`);
 });
 

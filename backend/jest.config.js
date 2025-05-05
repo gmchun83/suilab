@@ -19,4 +19,8 @@ module.exports = {
       statements: 70,
     },
   },
+  // Add timeout to prevent tests from hanging
+  testTimeout: 10000,
+  // Setup files to run before tests
+  setupFiles: ['<rootDir>/src/tests/setup.js'],
 }

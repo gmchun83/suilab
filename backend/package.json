@@ -7,7 +7,17 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "test:simple": "jest src/tests/unit/simple.test.ts --no-cache --detectOpenHandles",
+    "test:controller": "jest src/tests/unit/controllers/simpleController.test.ts --no-cache --detectOpenHandles",
+    "test:service": "jest src/tests/unit/services/simpleService.test.ts --no-cache --detectOpenHandles",
+    "test:repository": "jest src/tests/unit/repositories/simpleRepository.test.ts --no-cache --detectOpenHandles",
+    "test:all": "jest src/tests/unit/simple.test.ts src/tests/unit/controllers/simpleController.test.ts src/tests/unit/services/simpleService.test.ts src/tests/unit/repositories/simpleRepository.test.ts --no-cache --detectOpenHandles",
+    "test:unit": "jest src/tests/unit --no-cache --detectOpenHandles",
+    "test:integration": "jest src/tests/integration --no-cache --detectOpenHandles",
+    "test:controllers": "jest src/tests/unit/controllers --no-cache --detectOpenHandles",
+    "test:services": "jest src/tests/unit/services --no-cache --detectOpenHandles",
+    "test:repositories": "jest src/tests/unit/repositories --no-cache --detectOpenHandles"
   },
   "dependencies": {
     "@mysten/sui.js": "^0.42.0",

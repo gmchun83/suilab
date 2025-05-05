@@ -1,19 +1,28 @@
-const { logger } = require('../../utils/logger')
+// Mock config before importing logger
+jest.mock('../../config', () => ({
+  LOGGING_CONFIG: {
+    level: 'info',
+    format: 'pretty',
+    directory: 'logs',
+  }
+}));
+
+import { logger } from '../../utils/logger';
 
 // Mock winston
 jest.mock('winston', () => {
   const mockFormat = {
-    combine: jest.fn(),
-    timestamp: jest.fn(),
-    json: jest.fn(),
-    colorize: jest.fn(),
-    simple: jest.fn(),
-  }
+    combine: jest.fn().mockReturnValue({}),
+    timestamp: jest.fn().mockReturnValue({}),
+    json: jest.fn().mockReturnValue({}),
+    colorize: jest.fn().mockReturnValue({}),
+    printf: jest.fn().mockReturnValue({}),
+  };
 
   const mockTransports = {
     Console: jest.fn(),
     File: jest.fn(),
-  }
+  };
 
   return {
     format: mockFormat,
@@ -24,8 +33,8 @@ jest.mock('winston', () => {
       debug: jest.fn(),
     }),
     transports: mockTransports,
-  }
-})
+  };
+});
 
 describe('Logger', () => {
   test('logger should be defined', () => {
