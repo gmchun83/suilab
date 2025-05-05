@@ -17,13 +17,13 @@ const About: React.FC = () => {
         <Card>
           <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
           <p className="text-gray-700 mb-4">
-            PumpSui is dedicated to democratizing meme coin creation and trading on the Sui blockchain. 
-            We believe that anyone should be able to launch their own meme coin with minimal technical knowledge, 
+            PumpSui is dedicated to democratizing meme coin creation and trading on the Sui blockchain.
+            We believe that anyone should be able to launch their own meme coin with minimal technical knowledge,
             while providing a safe and transparent environment for traders and investors.
           </p>
           <p className="text-gray-700">
-            Our platform leverages the power of Sui's fast and scalable blockchain to provide a seamless 
-            experience for creators and traders alike, with features like automatic liquidity pool creation, 
+            Our platform leverages the power of Sui's fast and scalable blockchain to provide a seamless
+            experience for creators and traders alike, with features like automatic liquidity pool creation,
             bonding curve trading, and comprehensive analytics.
           </p>
         </Card>
@@ -156,12 +156,12 @@ const About: React.FC = () => {
 
       <section className="text-center">
         <h2 className="text-2xl font-bold mb-4">Ready to Launch Your Meme Coin?</h2>
-        <div className="flex justify-center space-x-4">
-          <Link to="/create">
-            <Button size="lg">Create Coin</Button>
+        <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+          <Link to="/create" className="w-full sm:w-auto">
+            <Button size="lg" fullWidth className="sm:w-auto">Create Coin</Button>
           </Link>
-          <Link to="/explore">
-            <Button size="lg" variant="outline">Explore Coins</Button>
+          <Link to="/explore" className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" fullWidth className="sm:w-auto">Explore Coins</Button>
           </Link>
         </div>
       </section>

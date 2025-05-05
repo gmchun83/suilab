@@ -101,7 +101,29 @@ const FAQ: React.FC = () => {
       </section>
 
       <section className="flex flex-col md:flex-row gap-6">
-        <div className="md:w-1/4">
+        {/* Mobile category selector */}
+        <div className="md:hidden mb-4">
+          <Card>
+            <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-2">
+              Select Category
+            </label>
+            <select
+              id="category-select"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
+            >
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </Card>
+        </div>
+
+        {/* Desktop category sidebar */}
+        <div className="hidden md:block md:w-1/4">
           <Card>
             <h2 className="text-lg font-bold mb-4">Categories</h2>
             <div className="space-y-2">
@@ -136,9 +158,9 @@ const FAQ: React.FC = () => {
                     className="flex justify-between items-center w-full text-left font-medium text-gray-900 py-2"
                     onClick={() => toggleFAQ(index)}
                   >
-                    <span>{faq.question}</span>
+                    <span className="pr-2">{faq.question}</span>
                     <svg
-                      className={`h-5 w-5 text-gray-500 transition-transform ${
+                      className={`h-5 w-5 flex-shrink-0 text-gray-500 transition-transform ${
                         activeIndex === index ? 'transform rotate-180' : ''
                       }`}
                       xmlns="http://www.w3.org/2000/svg"

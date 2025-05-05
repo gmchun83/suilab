@@ -16,7 +16,7 @@ const Contact: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => {
@@ -29,40 +29,40 @@ const Contact: React.FC = () => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required'
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required'
     } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
       newErrors.email = 'Invalid email address'
     }
-    
+
     if (!formData.subject.trim()) {
       newErrors.subject = 'Subject is required'
     }
-    
+
     if (!formData.message.trim()) {
       newErrors.message = 'Message is required'
     } else if (formData.message.length < 10) {
       newErrors.message = 'Message must be at least 10 characters'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsSubmitting(true)
-    
+
     // Simulate API call
     try {
       await new Promise(resolve => setTimeout(resolve, 1500))
@@ -90,7 +90,7 @@ const Contact: React.FC = () => {
         </p>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         <Card>
           <div className="text-center">
             <div className="h-12 w-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center mx-auto mb-4">
@@ -158,13 +158,13 @@ const Contact: React.FC = () => {
           ) : (
             <>
               <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
-              
+
               {errors.submit && (
                 <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-md">
                   {errors.submit}
                 </div>
               )}
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -185,7 +185,7 @@ const Contact: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
@@ -205,7 +205,7 @@ const Contact: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
                     Subject
@@ -231,7 +231,7 @@ const Contact: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
                     Message
@@ -251,11 +251,12 @@ const Contact: React.FC = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.message}</p>
                   )}
                 </div>
-                
-                <div>
+
+                <div className="flex flex-col sm:flex-row sm:justify-end">
                   <Button
                     type="submit"
                     fullWidth
+                    className="sm:w-auto"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Sending...' : 'Send Message'}
