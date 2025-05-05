@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { RootState } from '../store'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
@@ -12,26 +12,27 @@ interface PortfolioCoin extends Coin {
 }
 
 const Portfolio: React.FC = () => {
+  const navigate = useNavigate()
   const { connected, address } = useSelector((state: RootState) => state.wallet)
   const { coins } = useSelector((state: RootState) => state.coins)
-  
+
   const [portfolioCoins, setPortfolioCoins] = useState<PortfolioCoin[]>([])
   const [loading, setLoading] = useState(false)
-  
+
   useEffect(() => {
     if (connected && address) {
       loadPortfolio()
     }
   }, [connected, address, coins])
-  
+
   const loadPortfolio = async () => {
     // This would be implemented with actual blockchain interaction
     // For now, we'll simulate some portfolio data
     setLoading(true)
-    
+
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // Create mock portfolio data using some of the available coins
     const mockPortfolio: PortfolioCoin[] = coins
       .slice(0, Math.min(5, coins.length))
@@ -44,13 +45,13 @@ const Portfolio: React.FC = () => {
         ...coin,
         value: Number(coin.balance) * coin.price
       }))
-    
+
     setPortfolioCoins(mockPortfolio)
     setLoading(false)
   }
-  
+
   const totalValue = portfolioCoins.reduce((sum, coin) => sum + coin.value, 0)
-  
+
   if (!connected) {
     return (
       <div className="text-center py-12">
@@ -60,24 +61,24 @@ const Portfolio: React.FC = () => {
             <p className="text-gray-600 mb-6">
               Connect your wallet to view your portfolio
             </p>
-            <Button>Connect Wallet</Button>
+            <Button onClick={() => navigate('/wallet')}>Connect Wallet</Button>
           </div>
         </Card>
       </div>
     )
   }
-  
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Your Portfolio</h1>
-      
+
       <Card>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-gray-500">Total Portfolio Value</div>
             <div className="text-3xl font-bold">${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>
-          
+
           <div className="mt-4 md:mt-0">
             <Link to="/explore">
               <Button>Explore Coins</Button>
@@ -85,7 +86,7 @@ const Portfolio: React.FC = () => {
           </div>
         </div>
       </Card>
-      
+
       {loading ? (
         <div className="text-center py-8">Loading your portfolio...</div>
       ) : portfolioCoins.length === 0 ? (
@@ -141,7 +142,7 @@ const Portfolio: React.FC = () => {
                       <Link to={`/coins/${coin.id}`} className="text-primary-600 hover:text-primary-900 mr-4">
                         Details
                       </Link>
-                      <button className="text-primary-600 hover:text-primary-900">
+                      <button type="button" className="text-primary-600 hover:text-primary-900">
                         Sell
                       </button>
                     </td>
@@ -150,7 +151,7 @@ const Portfolio: React.FC = () => {
               </tbody>
             </table>
           </div>
-          
+
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="text-sm text-gray-500">
               Note: This is a simulated portfolio for demonstration purposes.
