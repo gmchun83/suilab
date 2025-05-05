@@ -7,6 +7,7 @@ import Explore from './pages/Explore'
 import Portfolio from './pages/Portfolio'
 import CreatorDashboard from './pages/CreatorDashboard'
 import WalletConnection from './pages/WalletConnection'
+import UserProfile from './pages/UserProfile'
 import About from './pages/About'
 import FAQ from './pages/FAQ'
 import Contact from './pages/Contact'
@@ -26,6 +27,7 @@ function App() {
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/dashboard" element={<CreatorDashboard />} />
           <Route path="/wallet" element={<WalletConnection />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="/about" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/contact" element={<Contact />} />

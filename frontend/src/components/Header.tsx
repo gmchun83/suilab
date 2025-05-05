@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { RootState } from '../store'
 import WalletButton from './WalletButton'
 
 const Header: React.FC = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -22,6 +23,12 @@ const Header: React.FC = () => {
     { name: 'About', href: '/about' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },
+  ]
+
+  // User menu items
+  const userNavigation = [
+    { name: 'Profile', href: '/profile' },
+    { name: 'Settings', href: '/profile?tab=settings' },
   ]
 
   // Add dashboard link if wallet is connected
@@ -119,6 +126,23 @@ const Header: React.FC = () => {
           </div>
 
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
+            {connected && (
+              <div className="relative ml-3 mr-4">
+                <div>
+                  <button
+                    type="button"
+                    className="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                    onClick={() => navigate('/profile')}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                      <span className="text-primary-800 font-medium">
+                        {address?.substring(0, 2)}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
             <WalletButton />
           </div>
 
@@ -201,6 +225,15 @@ const Header: React.FC = () => {
               <div className="px-4">
                 <WalletButton />
               </div>
+              {connected && (
+                <Link
+                  to="/profile"
+                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Profile
+                </Link>
+              )}
             </div>
           </div>
         </div>

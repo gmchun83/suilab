@@ -6,7 +6,8 @@ import { fetchCoinDetails } from '../store/slices/coinsSlice'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
-import { fetchTransactions } from '../utils/api'
+import PriceChart from '../components/PriceChart'
+import TransactionHistory from '../components/TransactionHistory'
 import { Transaction } from '../types'
 
 const CoinDetails: React.FC = () => {
@@ -14,20 +15,21 @@ const CoinDetails: React.FC = () => {
   const dispatch = useDispatch()
   const { selectedCoin, loading, error } = useSelector((state: RootState) => state.coins)
   const { connected } = useSelector((state: RootState) => state.wallet)
-  
+
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [sellModalOpen, setSellModalOpen] = useState(false)
   const [amount, setAmount] = useState('')
-  
+
   useEffect(() => {
     if (id) {
       dispatch(fetchCoinDetails(id) as any)
       loadTransactions(id)
     }
   }, [dispatch, id])
-  
+
+  // This method is now handled by the TransactionHistory component
   const loadTransactions = async (coinId: string) => {
     try {
       setTransactionsLoading(true)
@@ -39,21 +41,21 @@ const CoinDetails: React.FC = () => {
       setTransactionsLoading(false)
     }
   }
-  
+
   const handleBuy = () => {
     // This would be implemented with actual blockchain interaction
     console.log(`Buying ${amount} of ${selectedCoin?.symbol}`)
     setBuyModalOpen(false)
     setAmount('')
   }
-  
+
   const handleSell = () => {
     // This would be implemented with actual blockchain interaction
     console.log(`Selling ${amount} of ${selectedCoin?.symbol}`)
     setSellModalOpen(false)
     setAmount('')
   }
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -61,7 +63,7 @@ const CoinDetails: React.FC = () => {
       </div>
     )
   }
-  
+
   if (error) {
     return (
       <div className="text-center py-8">
@@ -72,7 +74,7 @@ const CoinDetails: React.FC = () => {
       </div>
     )
   }
-  
+
   if (!selectedCoin) {
     return (
       <div className="text-center py-8">
@@ -83,7 +85,7 @@ const CoinDetails: React.FC = () => {
       </div>
     )
   }
-  
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -102,7 +104,7 @@ const CoinDetails: React.FC = () => {
             <div className="text-gray-500">{selectedCoin.symbol}</div>
           </div>
         </div>
-        
+
         <div className="mt-4 md:mt-0 flex space-x-4">
           <Button
             onClick={() => setBuyModalOpen(true)}
@@ -119,7 +121,7 @@ const CoinDetails: React.FC = () => {
           </Button>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <div className="text-center">
@@ -128,7 +130,7 @@ const CoinDetails: React.FC = () => {
             <div className="text-green-500">+12.5%</div>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <div className="text-gray-500 mb-1">Market Cap</div>
@@ -137,7 +139,7 @@ const CoinDetails: React.FC = () => {
             </div>
           </div>
         </Card>
-        
+
         <Card>
           <div className="text-center">
             <div className="text-gray-500 mb-1">Supply</div>
@@ -147,7 +149,10 @@ const CoinDetails: React.FC = () => {
           </div>
         </Card>
       </div>
-      
+
+      {/* Price Chart */}
+      <PriceChart coinId={selectedCoin.id} coinSymbol={selectedCoin.symbol} />
+
       <Card>
         <h2 className="text-xl font-bold mb-4">About {selectedCoin.name}</h2>
         <p className="text-gray-700">
@@ -166,57 +171,10 @@ const CoinDetails: React.FC = () => {
           </div>
         </div>
       </Card>
-      
-      <Card>
-        <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
-        {transactionsLoading ? (
-          <div className="text-center py-4">Loading transactions...</div>
-        ) : transactions.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">No transactions yet</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wallet</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((tx) => (
-                  <tr key={tx.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        tx.type === 'BUY' ? 'bg-green-100 text-green-800' :
-                        tx.type === 'SELL' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {Number(tx.amount).toLocaleString()} {selectedCoin.symbol}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      ${tx.price.toFixed(6)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
-                      {tx.walletAddress.substring(0, 6)}...{tx.walletAddress.substring(tx.walletAddress.length - 4)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(tx.timestamp).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
-      
+
+      {/* Transaction History */}
+      <TransactionHistory coinId={selectedCoin.id} coinSymbol={selectedCoin.symbol} />
+
       {/* Buy Modal */}
       <Modal
         isOpen={buyModalOpen}
@@ -238,7 +196,7 @@ const CoinDetails: React.FC = () => {
               min="0"
             />
           </div>
-          
+
           {amount && (
             <div className="bg-gray-50 p-4 rounded-md">
               <div className="flex justify-between mb-2">
@@ -251,7 +209,7 @@ const CoinDetails: React.FC = () => {
               </div>
             </div>
           )}
-          
+
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               variant="secondary"
@@ -268,7 +226,7 @@ const CoinDetails: React.FC = () => {
           </div>
         </div>
       </Modal>
-      
+
       {/* Sell Modal */}
       <Modal
         isOpen={sellModalOpen}
@@ -290,7 +248,7 @@ const CoinDetails: React.FC = () => {
               min="0"
             />
           </div>
-          
+
           {amount && (
             <div className="bg-gray-50 p-4 rounded-md">
               <div className="flex justify-between mb-2">
@@ -303,7 +261,7 @@ const CoinDetails: React.FC = () => {
               </div>
             </div>
           )}
-          
+
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               variant="secondary"
