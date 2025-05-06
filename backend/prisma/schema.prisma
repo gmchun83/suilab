@@ -26,6 +26,8 @@ model Coin {
   dexListed     Boolean       @default(false)
   holders       Int           @default(0)
   burnedSupply  BigInt        @default(0)
+  volume24h     Float         @default(0)
+  priceChange24h Float        @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   transactions  Transaction[]

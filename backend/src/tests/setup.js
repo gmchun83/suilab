@@ -24,8 +24,16 @@ jest.mock('../utils/redisClient', () => {
     redisGet: jest.fn().mockImplementation(async (key) => {
       return mockRedisClient.get(key);
     }),
-    redisSet: jest.fn().mockImplementation(async (key, value, ttl) => {
-      return mockRedisClient.set(key, value, ttl);
+    redisSet: jest.fn().mockImplementation(async (key, value, options) => {
+      // Handle both the old style (key, value, 'EX', ttl) and new style (key, value, { EX: ttl })
+      if (typeof options === 'object' && options !== null) {
+        return mockRedisClient.set(key, value, options);
+      } else if (options === 'EX' && arguments.length === 4) {
+        const ttl = arguments[3];
+        return mockRedisClient.set(key, value, { EX: ttl });
+      } else {
+        return mockRedisClient.set(key, value);
+      }
     }),
     redisDel: jest.fn().mockImplementation(async (key) => {
       return mockRedisClient.del(key);

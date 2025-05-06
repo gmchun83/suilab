@@ -9,8 +9,21 @@ import { PricePoint } from '../../types';
  */
 export const getCoins = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    // Parse and validate pagination parameters
+    let page = parseInt(req.query.page as string) || 1;
+    let limit = parseInt(req.query.limit as string) || 10;
+
+    // Handle negative or zero page numbers
+    if (page <= 0) {
+      page = 1;
+    }
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 10;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     const coins = await coinService.getAllCoins(page, limit);
 
@@ -61,7 +74,15 @@ export const getCoinById = async (req: Request, res: Response) => {
  */
 export const getTrendingCoins = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 6;
+    // Parse and validate limit parameter
+    let limit = parseInt(req.query.limit as string) || 6;
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 6;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     const trendingCoins = await coinService.getTrendingCoins(limit);
 
@@ -130,8 +151,22 @@ export const updateCoin = async (req: Request, res: Response) => {
 export const searchCoins = async (req: Request, res: Response) => {
   try {
     const query = req.query.q as string;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+
+    // Parse and validate pagination parameters
+    let page = parseInt(req.query.page as string) || 1;
+    let limit = parseInt(req.query.limit as string) || 10;
+
+    // Handle negative or zero page numbers
+    if (page <= 0) {
+      page = 1;
+    }
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 10;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     if (!query) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -190,8 +225,16 @@ export const getCoinPriceHistory = async (req: Request, res: Response) => {
  */
 export const getLeaderboard = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
+    // Parse and validate limit parameter
+    let limit = parseInt(req.query.limit as string) || 10;
     const sortBy = req.query.sortBy as string || 'marketCap';
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 10;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     const leaderboard = await coinService.getLeaderboard(limit, sortBy);
 

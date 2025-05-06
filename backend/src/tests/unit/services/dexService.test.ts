@@ -21,8 +21,7 @@ jest.mock('@mysten/sui.js/transactions', () => ({
 jest.mock('axios');
 
 jest.mock('../../../utils/logger', () => ({
-  __esModule: true,
-  default: {
+  logger: {
     info: jest.fn(),
     error: jest.fn(),
     warn: jest.fn(),
@@ -33,7 +32,13 @@ jest.mock('../../../utils/logger', () => ({
 jest.mock('../../../config', () => ({
   prisma: {
     coin: {
-      findUnique: jest.fn()
+      findUnique: jest.fn(),
+      update: jest.fn()
+    },
+    pool: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn()
     }
   }
 }));

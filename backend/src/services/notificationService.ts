@@ -1,6 +1,6 @@
 import { Server } from 'http'
 import { Server as SocketServer } from 'socket.io'
-import logger from '../utils/logger'
+import { logger } from '../utils/logger'
 
 class NotificationService {
   private io: SocketServer | null = null

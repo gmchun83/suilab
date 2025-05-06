@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import dexController from '../../../api/controllers/dexController';
 import dexService from '../../../services/dexService';
-import logger from '../../../utils/logger';
+import { logger } from '../../../utils/logger';
 
 // Mock the dexService
 jest.mock('../../../services/dexService', () => ({
@@ -17,9 +17,11 @@ jest.mock('../../../services/dexService', () => ({
 
 // Mock the logger
 jest.mock('../../../utils/logger', () => ({
-  __esModule: true,
-  default: {
-    error: jest.fn()
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
   }
 }));
 
@@ -32,7 +34,7 @@ describe('DexController', () => {
   beforeEach(() => {
     responseJson = jest.fn().mockReturnThis();
     responseStatus = jest.fn().mockReturnValue({ json: responseJson });
-    
+
     mockRequest = {
       params: {},
       query: {},
@@ -49,14 +51,14 @@ describe('DexController', () => {
   describe('getPoolInfo', () => {
     it('should return pool info for a coin', async () => {
       const mockCoinId = 'coin1';
-      const mockPoolInfo = { 
-        poolId: 'pool1', 
-        liquidity: '1000', 
-        price: '0.001' 
+      const mockPoolInfo = {
+        poolId: 'pool1',
+        liquidity: '1000',
+        price: '0.001'
       };
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getPoolInfo as jest.Mock).mockResolvedValue(mockPoolInfo);
 
       await dexController.getPoolInfo(mockRequest as Request, mockResponse as Response);
@@ -74,7 +76,7 @@ describe('DexController', () => {
       const mockError = new Error('Service error');
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getPoolInfo as jest.Mock).mockRejectedValue(mockError);
 
       await dexController.getPoolInfo(mockRequest as Request, mockResponse as Response);
@@ -84,7 +86,7 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(500);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: mockError.message
+        error: 'Internal server error'
       });
     });
   });
@@ -99,7 +101,7 @@ describe('DexController', () => {
 
       mockRequest.params = { coinId: mockCoinId };
       mockRequest.query = {};
-      
+
       (dexService.getPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
 
       await dexController.getPriceHistory(mockRequest as Request, mockResponse as Response);
@@ -122,7 +124,7 @@ describe('DexController', () => {
 
       mockRequest.params = { coinId: mockCoinId };
       mockRequest.query = { timeframe: mockTimeframe };
-      
+
       (dexService.getPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
 
       await dexController.getPriceHistory(mockRequest as Request, mockResponse as Response);
@@ -145,7 +147,7 @@ describe('DexController', () => {
 
       mockRequest.params = { coinId: mockCoinId };
       mockRequest.query = { timeframe: mockInvalidTimeframe };
-      
+
       (dexService.getPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
 
       await dexController.getPriceHistory(mockRequest as Request, mockResponse as Response);
@@ -164,7 +166,7 @@ describe('DexController', () => {
       const mockError = new Error('Service error');
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getPriceHistory as jest.Mock).mockRejectedValue(mockError);
 
       await dexController.getPriceHistory(mockRequest as Request, mockResponse as Response);
@@ -174,7 +176,7 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(500);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: mockError.message
+        error: 'Internal server error'
       });
     });
   });
@@ -187,14 +189,14 @@ describe('DexController', () => {
         tokenAmount: '1000000',
         walletAddress: '0x123'
       };
-      const mockResult = { 
-        poolId: 'pool1', 
-        txHash: '0xabc' 
+      const mockResult = {
+        poolId: 'pool1',
+        txHash: '0xabc'
       };
 
       mockRequest.params = { coinId: mockCoinId };
       mockRequest.body = mockPoolData;
-      
+
       (dexService.createCetusDexPool as jest.Mock).mockResolvedValue(mockResult);
 
       await dexController.createDexPool(mockRequest as Request, mockResponse as Response);
@@ -228,7 +230,8 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(400);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: 'suiAmount, tokenAmount, and walletAddress are required'
+        error: 'Validation error',
+        details: ['suiAmount, tokenAmount, and walletAddress are required']
       });
     });
 
@@ -243,7 +246,7 @@ describe('DexController', () => {
 
       mockRequest.params = { coinId: mockCoinId };
       mockRequest.body = mockPoolData;
-      
+
       (dexService.createCetusDexPool as jest.Mock).mockRejectedValue(mockError);
 
       await dexController.createDexPool(mockRequest as Request, mockResponse as Response);
@@ -253,7 +256,7 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(500);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: mockError.message
+        error: 'Internal server error'
       });
     });
   });
@@ -267,7 +270,7 @@ describe('DexController', () => {
       ];
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getDexPools as jest.Mock).mockResolvedValue(mockPools);
 
       await dexController.getDexPools(mockRequest as Request, mockResponse as Response);
@@ -285,7 +288,7 @@ describe('DexController', () => {
       const mockError = new Error('Service error');
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getDexPools as jest.Mock).mockRejectedValue(mockError);
 
       await dexController.getDexPools(mockRequest as Request, mockResponse as Response);
@@ -295,7 +298,7 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(500);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: mockError.message
+        error: 'Internal server error'
       });
     });
   });
@@ -306,7 +309,7 @@ describe('DexController', () => {
       const mockMarketCap = '1000000';
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getMarketCap as jest.Mock).mockResolvedValue(mockMarketCap);
 
       await dexController.getMarketCap(mockRequest as Request, mockResponse as Response);
@@ -324,7 +327,7 @@ describe('DexController', () => {
       const mockError = new Error('Service error');
 
       mockRequest.params = { coinId: mockCoinId };
-      
+
       (dexService.getMarketCap as jest.Mock).mockRejectedValue(mockError);
 
       await dexController.getMarketCap(mockRequest as Request, mockResponse as Response);
@@ -334,7 +337,7 @@ describe('DexController', () => {
       expect(responseStatus).toHaveBeenCalledWith(500);
       expect(responseJson).toHaveBeenCalledWith({
         success: false,
-        error: mockError.message
+        error: 'Internal server error'
       });
     });
   });

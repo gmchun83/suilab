@@ -1,15 +1,15 @@
-import notificationService from '../../../services/notificationService';
-import logger from '../../../utils/logger';
-
-// Mock the logger
+// Mock the logger first to avoid circular dependencies
 jest.mock('../../../utils/logger', () => ({
-  __esModule: true,
-  default: {
+  logger: {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn()
   }
 }));
+
+// Import after mocking to avoid circular dependency
+import notificationService from '../../../services/notificationService';
+import { logger } from '../../../utils/logger';
 
 describe('NotificationService', () => {
   let mockIo: any;

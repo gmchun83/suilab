@@ -120,18 +120,18 @@ describe('Coin Repository', () => {
     it('should return a coin by object ID', async () => {
       const mockCoin = { id: '1', objectId: 'obj123', name: 'TestCoin' };
 
-      (prisma.coin.findFirst as jest.Mock).mockResolvedValue(mockCoin);
+      (prisma.coin.findUnique as jest.Mock).mockResolvedValue(mockCoin);
 
       const result = await coinRepository.findByObjectId('obj123');
 
-      expect(prisma.coin.findFirst).toHaveBeenCalledWith({
+      expect(prisma.coin.findUnique).toHaveBeenCalledWith({
         where: { objectId: 'obj123' }
       });
       expect(result).toEqual(mockCoin);
     });
 
     it('should return null if coin not found', async () => {
-      (prisma.coin.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.coin.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await coinRepository.findByObjectId('nonexistent');
 
@@ -140,7 +140,7 @@ describe('Coin Repository', () => {
 
     it('should handle errors', async () => {
       const error = new Error('Database error');
-      (prisma.coin.findFirst as jest.Mock).mockRejectedValue(error);
+      (prisma.coin.findUnique as jest.Mock).mockRejectedValue(error);
 
       await expect(coinRepository.findByObjectId('obj123')).rejects.toThrow(error);
       expect(logger.error).toHaveBeenCalled();
@@ -356,7 +356,7 @@ describe('Coin Repository', () => {
       expect(prisma.coin.findMany).toHaveBeenCalledWith({
         take: 5,
         orderBy: [
-          { volume24h: 'desc' },
+          { price: 'desc' },
           { createdAt: 'desc' }
         ]
       });

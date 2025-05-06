@@ -9,8 +9,22 @@ import { ERROR_MESSAGES, HTTP_STATUS } from '../../constants';
 export const getTransactionsByCoinId = async (req: Request, res: Response) => {
   try {
     const { coinId } = req.params;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+
+    // Parse and validate pagination parameters
+    let page = parseInt(req.query.page as string) || 1;
+    let limit = parseInt(req.query.limit as string) || 20;
+
+    // Handle negative or zero page numbers
+    if (page <= 0) {
+      page = 1;
+    }
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 20;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     try {
       const transactions = await transactionService.getTransactionsByCoinId(coinId, page, limit);
@@ -101,8 +115,22 @@ export const createTransaction = async (req: Request, res: Response) => {
 export const getTransactionsByWalletAddress = async (req: Request, res: Response) => {
   try {
     const { walletAddress } = req.params;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+
+    // Parse and validate pagination parameters
+    let page = parseInt(req.query.page as string) || 1;
+    let limit = parseInt(req.query.limit as string) || 20;
+
+    // Handle negative or zero page numbers
+    if (page <= 0) {
+      page = 1;
+    }
+
+    // Cap limit to a reasonable value
+    if (limit <= 0) {
+      limit = 20;
+    } else if (limit > 100) {
+      limit = 100;
+    }
 
     const transactions = await transactionService.getTransactionsByWalletAddress(walletAddress, page, limit);
 

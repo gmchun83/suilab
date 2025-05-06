@@ -1,7 +1,6 @@
-import { TransactionRepository } from '../../../db/repositories/transactionRepository';
+import { TransactionRepository, TransactionType } from '../../../db/repositories/transactionRepository';
 import { prisma } from '../../../config';
 import { logger } from '../../../utils/logger';
-import { TransactionType } from '../../../types/transaction';
 
 // Mock Prisma
 jest.mock('../../../config', () => ({

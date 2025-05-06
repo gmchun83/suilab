@@ -35,13 +35,12 @@ export class CoinRepository {
     try {
       // This is a simplified implementation
       // In a real app, you would calculate trending based on volume, price change, etc.
-      // Since we can't directly sort by these fields in Prisma,
-      // we'll just get the most recent coins and sort them in memory
       const coins = await prisma.coin.findMany({
-        take: limit * 2, // Get more coins than needed to have a better selection
-        orderBy: {
-          createdAt: 'desc',
-        },
+        take: limit,
+        orderBy: [
+          { price: 'desc' },
+          { createdAt: 'desc' },
+        ],
       });
 
       return coins as unknown as Coin[];
@@ -226,10 +225,10 @@ export class CoinRepository {
   /**
    * Get leaderboard
    */
-  async getLeaderboard(limit: number = 10, sortBy: string = 'marketCap'): Promise<Coin[]> {
+  async getLeaderboard(sortBy: string = 'marketCap', limit: number = 10): Promise<Coin[]> {
     try {
       // Validate sortBy parameter
-      const validSortFields = ['marketCap', 'price', 'volume24h', 'priceChange24h'];
+      const validSortFields = ['marketCap', 'price', 'volume24h', 'priceChange24h', 'holders'];
       const field = validSortFields.includes(sortBy) ? sortBy : 'marketCap';
 
       // Get coins sorted by the specified field

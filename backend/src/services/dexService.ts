@@ -2,7 +2,7 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { bcs } from '@mysten/sui.js/bcs'
 import axios from 'axios'
-import logger from '../utils/logger'
+import { logger } from '../utils/logger'
 import { prisma } from '../config'
 
 // Initialize Sui client
@@ -168,8 +168,7 @@ class DexService {
           type: 'DEX',
           suiBalance: suiAmount,
           tokenBalance: tokenAmount,
-          creatorAddress: walletAddress,
-          createdAt: new Date()
+          creatorAddress: walletAddress
         }
       })
 
@@ -177,7 +176,8 @@ class DexService {
       await prisma.coin.update({
         where: { id: coin.id },
         data: {
-          dexPoolId: dexPool.id,
+          // Store the pool ID as a string reference
+          poolId: dexPool.id,
           dexListed: true
         }
       })
