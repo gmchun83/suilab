@@ -135,7 +135,8 @@ export const searchCoins = async (req: Request, res: Response) => {
 
     if (!query) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Search query is required'
+        error: ERROR_MESSAGES.VALIDATION_ERROR,
+        details: ['"q" is required']
       });
     }
 

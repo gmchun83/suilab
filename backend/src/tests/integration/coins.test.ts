@@ -172,7 +172,13 @@ describe('Coin API Endpoints', () => {
         name: 'NewCoin',
         symbol: 'NC',
         objectId: 'obj123',
-        creatorAddress: '0x123'
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
       };
 
       const mockCreatedCoin = { id: '1', ...mockCoinData };
@@ -193,7 +199,13 @@ describe('Coin API Endpoints', () => {
         name: 'ExistingCoin',
         symbol: 'EC',
         objectId: 'obj123',
-        creatorAddress: '0x123'
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
       };
 
       (coinService.createCoin as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_ALREADY_EXISTS));
@@ -213,7 +225,13 @@ describe('Coin API Endpoints', () => {
         name: 'NewCoin',
         symbol: 'NC',
         objectId: 'obj123',
-        creatorAddress: '0x123'
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
       };
 
       (coinService.createCoin as jest.Mock).mockRejectedValue(new Error('Test error'));
@@ -232,8 +250,11 @@ describe('Coin API Endpoints', () => {
   describe('PUT /api/coins/:id', () => {
     it('should update a coin', async () => {
       const mockCoinData = {
-        name: 'UpdatedCoin',
-        symbol: 'UC'
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
       };
 
       const mockUpdatedCoin = { id: '1', ...mockCoinData };
@@ -251,8 +272,11 @@ describe('Coin API Endpoints', () => {
 
     it('should handle coin not found error', async () => {
       const mockCoinData = {
-        name: 'UpdatedCoin',
-        symbol: 'UC'
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
       };
 
       (coinService.updateCoin as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_NOT_FOUND));
@@ -269,8 +293,11 @@ describe('Coin API Endpoints', () => {
 
     it('should handle other errors', async () => {
       const mockCoinData = {
-        name: 'UpdatedCoin',
-        symbol: 'UC'
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
       };
 
       (coinService.updateCoin as jest.Mock).mockRejectedValue(new Error('Test error'));
@@ -314,7 +341,8 @@ describe('Coin API Endpoints', () => {
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(response.body).toEqual({
-        error: 'Search query is required'
+        error: ERROR_MESSAGES.VALIDATION_ERROR,
+        details: ['"q" is required']
       });
     });
 

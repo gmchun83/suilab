@@ -299,7 +299,8 @@ describe('Coins Controller', () => {
 
       expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.BAD_REQUEST);
       expect(responseJson).toHaveBeenCalledWith({
-        error: 'Search query is required'
+        error: ERROR_MESSAGES.VALIDATION_ERROR,
+        details: ['"q" is required']
       });
     });
 

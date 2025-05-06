@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 
 // API routes
-app.use(API_CONFIG.prefix, routes);
+app.use(routes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

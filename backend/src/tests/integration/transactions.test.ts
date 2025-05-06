@@ -42,11 +42,11 @@ describe('Transaction API Endpoints', () => {
         data: mockTransactions,
         pagination: {
           page: 1,
-          limit: 20,
+          limit: 10,
           total: 2
         }
       });
-      expect(transactionService.getTransactionsByCoinId).toHaveBeenCalledWith('coin1', 1, 20);
+      expect(transactionService.getTransactionsByCoinId).toHaveBeenCalledWith('coin1', 1, 10);
       expect(transactionService.getTotalTransactionsByCoinId).toHaveBeenCalledWith('coin1');
     });
 
@@ -132,11 +132,14 @@ describe('Transaction API Endpoints', () => {
   describe('POST /api/transactions', () => {
     it('should create a new transaction', async () => {
       const mockTransactionData = {
+        txId: '0xabc123',
         coinId: 'coin1',
         amount: '100',
-        type: 'buy',
+        type: 'BUY',
         walletAddress: '0x123',
-        hash: '0xabc'
+        price: 0.001,
+        value: '0.1',
+        timestamp: new Date().toISOString()
       };
 
       const mockCreatedTransaction = { id: '1', ...mockTransactionData };
@@ -154,11 +157,14 @@ describe('Transaction API Endpoints', () => {
 
     it('should handle coin not found error', async () => {
       const mockTransactionData = {
+        txId: '0xabc123',
         coinId: 'nonexistent',
         amount: '100',
-        type: 'buy',
+        type: 'BUY',
         walletAddress: '0x123',
-        hash: '0xabc'
+        price: 0.001,
+        value: '0.1',
+        timestamp: new Date().toISOString()
       };
 
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_NOT_FOUND));
@@ -175,11 +181,14 @@ describe('Transaction API Endpoints', () => {
 
     it('should handle validation error', async () => {
       const mockTransactionData = {
+        txId: '0xabc123',
         coinId: 'coin1',
         amount: '-100',
-        type: 'buy',
+        type: 'BUY',
         walletAddress: '0x123',
-        hash: '0xabc'
+        price: 0.001,
+        value: '0.1',
+        timestamp: new Date().toISOString()
       };
 
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.TRANSACTION_VALIDATION_FAILED));
@@ -196,11 +205,14 @@ describe('Transaction API Endpoints', () => {
 
     it('should handle other errors', async () => {
       const mockTransactionData = {
+        txId: '0xabc123',
         coinId: 'coin1',
         amount: '100',
-        type: 'buy',
+        type: 'BUY',
         walletAddress: '0x123',
-        hash: '0xabc'
+        price: 0.001,
+        value: '0.1',
+        timestamp: new Date().toISOString()
       };
 
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error('Test error'));
@@ -232,10 +244,10 @@ describe('Transaction API Endpoints', () => {
         data: mockTransactions,
         pagination: {
           page: 1,
-          limit: 20
+          limit: 10
         }
       });
-      expect(transactionService.getTransactionsByWalletAddress).toHaveBeenCalledWith('0x123', 1, 20);
+      expect(transactionService.getTransactionsByWalletAddress).toHaveBeenCalledWith('0x123', 1, 10);
     });
 
     it('should handle custom pagination parameters', async () => {

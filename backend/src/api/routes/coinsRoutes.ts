@@ -20,15 +20,15 @@ import { rateLimitMiddleware, authMiddleware } from '../middleware';
 const router = express.Router();
 
 // Public routes
-router.get('/coins', rateLimitMiddleware, validatePagination, getCoins);
-router.get('/coins/trending', rateLimitMiddleware, getTrendingCoins);
-router.get('/coins/search', rateLimitMiddleware, validateSearch, searchCoins);
-router.get('/coins/leaderboard', rateLimitMiddleware, getLeaderboard);
-router.get('/coins/:id', rateLimitMiddleware, getCoinById);
-router.get('/coins/:id/price-history', rateLimitMiddleware, getCoinPriceHistory);
+router.get('/api/coins', rateLimitMiddleware, validatePagination, getCoins);
+router.get('/api/coins/trending', rateLimitMiddleware, getTrendingCoins);
+router.get('/api/coins/search', rateLimitMiddleware, validateSearch, searchCoins);
+router.get('/api/coins/leaderboard', rateLimitMiddleware, getLeaderboard);
+router.get('/api/coins/:id', rateLimitMiddleware, getCoinById);
+router.get('/api/coins/:id/price-history', rateLimitMiddleware, getCoinPriceHistory);
 
 // Protected routes (require authentication)
-router.post('/coins', rateLimitMiddleware, authMiddleware, validateCreateCoin, createCoin);
-router.put('/coins/:id', rateLimitMiddleware, authMiddleware, validateUpdateCoin, updateCoin);
+router.post('/api/coins', rateLimitMiddleware, authMiddleware, validateCreateCoin, createCoin);
+router.put('/api/coins/:id', rateLimitMiddleware, authMiddleware, validateUpdateCoin, updateCoin);
 
 export default router;

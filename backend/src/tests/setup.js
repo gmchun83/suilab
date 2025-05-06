@@ -38,6 +38,14 @@ jest.mock('../utils/logger', () => {
   };
 });
 
+// Mock auth middleware
+jest.mock('../api/middleware/authMiddleware', () => {
+  return jest.fn().mockImplementation((req, res, next) => {
+    // Skip authentication in tests
+    next();
+  });
+});
+
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.REDIS_URL = 'redis://localhost:6379';

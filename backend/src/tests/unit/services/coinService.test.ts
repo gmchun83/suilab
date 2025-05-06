@@ -1,19 +1,64 @@
-// Import directly to avoid circular dependency
-import coinService from '../../../services/coinService';
-import { coinRepository } from '../../../db/repositories';
-import { redisClient } from '../../../utils/redisClient';
-import { logger } from '../../../utils/logger';
 import { ERROR_MESSAGES } from '../../../constants';
 import { mockCoinRepository } from '../../mocks/repositories';
 
-// Mock the coinRepository
+// Define variables to hold the mocked repositories
+let coinRepository: any;
+let redisClient: any;
+let logger: any;
+
+// Mock the repositories
 jest.mock('../../../db/repositories', () => ({
   coinRepository: mockCoinRepository
 }));
 
+// Mock Redis client
+jest.mock('../../../utils/redisClient', () => {
+  const mockRedisClient = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn()
+  };
+
+  return {
+    redisClient: mockRedisClient,
+    redisGet: jest.fn().mockImplementation(async (key) => mockRedisClient.get(key)),
+    redisSet: jest.fn().mockImplementation(async (key, value, ttl) => mockRedisClient.set(key, value, ttl)),
+    redisDel: jest.fn().mockImplementation(async (key) => mockRedisClient.del(key)),
+    __esModule: true,
+    default: mockRedisClient
+  };
+});
+
+// Mock logger
+jest.mock('../../../utils/logger', () => ({
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
+  }
+}));
+
+// Import after mocks to avoid circular dependency
+import coinService from '../../../services/coinService';
+
 describe('Coin Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Set up the mocked repositories and utilities
+    coinRepository = mockCoinRepository;
+    redisClient = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn()
+    };
+    logger = {
+      error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    };
   });
 
   describe('getAllCoins', () => {

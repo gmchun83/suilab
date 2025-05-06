@@ -1,11 +1,12 @@
-// Import directly to avoid circular dependency
-import transactionService from '../../../services/transactionService';
-import { transactionRepository, coinRepository } from '../../../db/repositories';
-import { redisClient } from '../../../utils/redisClient';
-import { logger } from '../../../utils/logger';
 import { ERROR_MESSAGES } from '../../../constants';
 import { mockTransactionRepository, mockCoinRepository } from '../../mocks/repositories';
 import { TransactionType } from '../../../types/transaction';
+
+// Define variables to hold the mocked repositories
+let transactionRepository: any;
+let coinRepository: any;
+let redisClient: any;
+let logger: any;
 
 // Mock the repositories
 jest.mock('../../../db/repositories', () => ({
@@ -14,28 +15,54 @@ jest.mock('../../../db/repositories', () => ({
 }));
 
 // Mock the redisClient
-jest.mock('../../../utils/redisClient', () => ({
-  redisClient: {
+jest.mock('../../../utils/redisClient', () => {
+  const mockRedisClient = {
     get: jest.fn(),
     set: jest.fn(),
     del: jest.fn()
-  },
-  redisGet: jest.fn(),
-  redisSet: jest.fn(),
-  redisDel: jest.fn()
-}));
+  };
+
+  return {
+    redisClient: mockRedisClient,
+    redisGet: jest.fn().mockImplementation(async (key) => mockRedisClient.get(key)),
+    redisSet: jest.fn().mockImplementation(async (key, value, ttl) => mockRedisClient.set(key, value, ttl)),
+    redisDel: jest.fn().mockImplementation(async (key) => mockRedisClient.del(key)),
+    __esModule: true,
+    default: mockRedisClient
+  };
+});
 
 // Mock the logger
 jest.mock('../../../utils/logger', () => ({
   logger: {
     error: jest.fn(),
-    info: jest.fn()
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
   }
 }));
+
+// Import after mocks to avoid circular dependency
+import transactionService from '../../../services/transactionService';
 
 describe('Transaction Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Set up the mocked repositories and utilities
+    transactionRepository = mockTransactionRepository;
+    coinRepository = mockCoinRepository;
+    redisClient = {
+      get: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn()
+    };
+    logger = {
+      error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn()
+    };
   });
 
   describe('getTransactionsByCoinId', () => {
@@ -308,4 +335,53 @@ describe('Transaction Service', () => {
       expect(logger.error).toHaveBeenCalled();
     });
   });
+
+  // We'll implement this test when the getTransactionByTxId method is added to the service
+  // describe('getTransactionByTxId', () => {
+  //   it('should return transaction from cache if available', async () => {
+  //     const mockTransaction = { id: '1', txId: '0xabc', coinId: 'coin1', amount: '100' };
+  //     (redisClient.get as jest.Mock).mockResolvedValue(JSON.stringify(mockTransaction));
+
+  //     const result = await transactionService.getTransactionByTxId('0xabc');
+
+  //     expect(redisClient.get).toHaveBeenCalledWith('transactions:txId:0xabc');
+  //     expect(transactionRepository.findByTxId).not.toHaveBeenCalled();
+  //     expect(result).toEqual(mockTransaction);
+  //   });
+
+  //   it('should fetch transaction from repository if not in cache', async () => {
+  //     const mockTransaction = { id: '1', txId: '0xabc', coinId: 'coin1', amount: '100' };
+  //     (redisClient.get as jest.Mock).mockResolvedValue(null);
+  //     (transactionRepository.findByTxId as jest.Mock).mockResolvedValue(mockTransaction);
+
+  //     const result = await transactionService.getTransactionByTxId('0xabc');
+
+  //     expect(redisClient.get).toHaveBeenCalledWith('transactions:txId:0xabc');
+  //     expect(transactionRepository.findByTxId).toHaveBeenCalledWith('0xabc');
+  //     expect(redisClient.set).toHaveBeenCalledWith(
+  //       'transactions:txId:0xabc',
+  //       JSON.stringify(mockTransaction),
+  //       'EX',
+  //       expect.any(Number)
+  //     );
+  //     expect(result).toEqual(mockTransaction);
+  //   });
+
+  //   it('should throw error if transaction not found', async () => {
+  //     (redisClient.get as jest.Mock).mockResolvedValue(null);
+  //     (transactionRepository.findByTxId as jest.Mock).mockResolvedValue(null);
+
+  //     await expect(transactionService.getTransactionByTxId('0xnonexistent'))
+  //       .rejects.toThrow(ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
+  //   });
+
+  //   it('should handle errors', async () => {
+  //     const error = new Error('Test error');
+  //     (redisClient.get as jest.Mock).mockRejectedValue(error);
+
+  //     await expect(transactionService.getTransactionByTxId('0xabc'))
+  //       .rejects.toThrow(ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
+  //     expect(logger.error).toHaveBeenCalled();
+  //   });
+  // });
 });
