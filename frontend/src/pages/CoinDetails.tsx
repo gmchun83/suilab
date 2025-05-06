@@ -9,18 +9,26 @@ import Modal from '../components/common/Modal'
 import PriceChart from '../components/PriceChart'
 import TransactionHistory from '../components/TransactionHistory'
 import { Transaction } from '../types'
+import { buyCoin, sellCoin } from '../utils/suiClient'
+import { fetchTransactions } from '../utils/api'
+import { useToast } from '../components/common/ToastProvider'
+import { getUserFriendlyErrorMessage } from '../utils/errorHandler'
 
 const CoinDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const dispatch = useDispatch()
   const { selectedCoin, loading, error } = useSelector((state: RootState) => state.coins)
-  const { connected } = useSelector((state: RootState) => state.wallet)
+  const { connected, address } = useSelector((state: RootState) => state.wallet)
+  const { showToast } = useToast()
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [sellModalOpen, setSellModalOpen] = useState(false)
   const [amount, setAmount] = useState('')
+  const [transactionLoading, setTransactionLoading] = useState(false)
+  const [transactionError, setTransactionError] = useState<string | null>(null)
+  const [transactionSuccess, setTransactionSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -29,31 +37,110 @@ const CoinDetails: React.FC = () => {
     }
   }, [dispatch, id])
 
-  // This method is now handled by the TransactionHistory component
+  // Show error toast if there's an error from Redux
+  useEffect(() => {
+    if (error) {
+      showToast(getUserFriendlyErrorMessage(error), 'error')
+    }
+  }, [error, showToast])
+
+  // Load transactions for this coin
   const loadTransactions = async (coinId: string) => {
     try {
       setTransactionsLoading(true)
       const data = await fetchTransactions(coinId)
-      setTransactions(data.transactions)
+      setTransactions(data.transactions || [])
     } catch (error) {
       console.error('Failed to load transactions:', error)
+      showToast(getUserFriendlyErrorMessage(error), 'error')
     } finally {
       setTransactionsLoading(false)
     }
   }
 
-  const handleBuy = () => {
-    // This would be implemented with actual blockchain interaction
-    console.log(`Buying ${amount} of ${selectedCoin?.symbol}`)
-    setBuyModalOpen(false)
-    setAmount('')
+  // Calculate estimated cost/receive amount based on current price
+  const calculateTotal = () => {
+    if (!selectedCoin || !amount || isNaN(Number(amount))) return 0;
+    return Number(amount) * selectedCoin.price;
   }
 
-  const handleSell = () => {
-    // This would be implemented with actual blockchain interaction
-    console.log(`Selling ${amount} of ${selectedCoin?.symbol}`)
-    setSellModalOpen(false)
-    setAmount('')
+  // Handle buying coins
+  const handleBuy = async () => {
+    if (!id || !amount || Number(amount) <= 0) return;
+
+    setTransactionLoading(true);
+    setTransactionError(null);
+    setTransactionSuccess(null);
+
+    try {
+      // Convert amount to SUI amount (price * amount)
+      const suiAmount = calculateTotal().toString();
+
+      // Call the buyCoin function
+      const result = await buyCoin(id, suiAmount);
+
+      if (result.success) {
+        const successMessage = `Successfully purchased ${amount} ${selectedCoin?.symbol}!`;
+        setTransactionSuccess(successMessage);
+        showToast(successMessage, 'success');
+
+        // Refresh coin details and transactions
+        dispatch(fetchCoinDetails(id) as any);
+        loadTransactions(id);
+
+        // Close modal after a delay
+        setTimeout(() => {
+          setBuyModalOpen(false);
+          setAmount('');
+          setTransactionSuccess(null);
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error buying coin:', err);
+      const errorMessage = getUserFriendlyErrorMessage(err);
+      setTransactionError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setTransactionLoading(false);
+    }
+  }
+
+  // Handle selling coins
+  const handleSell = async () => {
+    if (!id || !amount || Number(amount) <= 0) return;
+
+    setTransactionLoading(true);
+    setTransactionError(null);
+    setTransactionSuccess(null);
+
+    try {
+      // Call the sellCoin function
+      const result = await sellCoin(id, amount);
+
+      if (result.success) {
+        const successMessage = `Successfully sold ${amount} ${selectedCoin?.symbol}!`;
+        setTransactionSuccess(successMessage);
+        showToast(successMessage, 'success');
+
+        // Refresh coin details and transactions
+        dispatch(fetchCoinDetails(id) as any);
+        loadTransactions(id);
+
+        // Close modal after a delay
+        setTimeout(() => {
+          setSellModalOpen(false);
+          setAmount('');
+          setTransactionSuccess(null);
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error selling coin:', err);
+      const errorMessage = getUserFriendlyErrorMessage(err);
+      setTransactionError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setTransactionLoading(false);
+    }
   }
 
   if (loading) {
@@ -178,10 +265,22 @@ const CoinDetails: React.FC = () => {
       {/* Buy Modal */}
       <Modal
         isOpen={buyModalOpen}
-        onClose={() => setBuyModalOpen(false)}
+        onClose={() => !transactionLoading && setBuyModalOpen(false)}
         title={`Buy ${selectedCoin.symbol}`}
       >
         <div className="space-y-4">
+          {transactionError && (
+            <div className="bg-red-50 text-red-700 p-4 rounded-md">
+              {transactionError}
+            </div>
+          )}
+
+          {transactionSuccess && (
+            <div className="bg-green-50 text-green-700 p-4 rounded-md">
+              {transactionSuccess}
+            </div>
+          )}
+
           <div>
             <label htmlFor="buyAmount" className="block text-sm font-medium text-gray-700 mb-1">
               Amount to Buy
@@ -194,6 +293,7 @@ const CoinDetails: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               placeholder={`Enter ${selectedCoin.symbol} amount`}
               min="0"
+              disabled={transactionLoading}
             />
           </div>
 
@@ -205,7 +305,10 @@ const CoinDetails: React.FC = () => {
               </div>
               <div className="flex justify-between mb-2">
                 <span>Total cost:</span>
-                <span>${(Number(amount) * selectedCoin.price).toFixed(6)} SUI</span>
+                <span>${calculateTotal().toFixed(6)} SUI</span>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                Note: Actual cost may vary slightly due to price fluctuations and gas fees
               </div>
             </div>
           )}
@@ -214,14 +317,15 @@ const CoinDetails: React.FC = () => {
             <Button
               variant="secondary"
               onClick={() => setBuyModalOpen(false)}
+              disabled={transactionLoading}
             >
               Cancel
             </Button>
             <Button
               onClick={handleBuy}
-              disabled={!amount || Number(amount) <= 0}
+              disabled={!amount || Number(amount) <= 0 || transactionLoading}
             >
-              Buy {selectedCoin.symbol}
+              {transactionLoading ? 'Processing...' : `Buy ${selectedCoin.symbol}`}
             </Button>
           </div>
         </div>
@@ -230,10 +334,22 @@ const CoinDetails: React.FC = () => {
       {/* Sell Modal */}
       <Modal
         isOpen={sellModalOpen}
-        onClose={() => setSellModalOpen(false)}
+        onClose={() => !transactionLoading && setSellModalOpen(false)}
         title={`Sell ${selectedCoin.symbol}`}
       >
         <div className="space-y-4">
+          {transactionError && (
+            <div className="bg-red-50 text-red-700 p-4 rounded-md">
+              {transactionError}
+            </div>
+          )}
+
+          {transactionSuccess && (
+            <div className="bg-green-50 text-green-700 p-4 rounded-md">
+              {transactionSuccess}
+            </div>
+          )}
+
           <div>
             <label htmlFor="sellAmount" className="block text-sm font-medium text-gray-700 mb-1">
               Amount to Sell
@@ -246,6 +362,7 @@ const CoinDetails: React.FC = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               placeholder={`Enter ${selectedCoin.symbol} amount`}
               min="0"
+              disabled={transactionLoading}
             />
           </div>
 
@@ -257,7 +374,10 @@ const CoinDetails: React.FC = () => {
               </div>
               <div className="flex justify-between mb-2">
                 <span>Total receive:</span>
-                <span>${(Number(amount) * selectedCoin.price).toFixed(6)} SUI</span>
+                <span>${calculateTotal().toFixed(6)} SUI</span>
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                Note: Actual amount received may vary slightly due to price fluctuations and gas fees
               </div>
             </div>
           )}
@@ -266,14 +386,15 @@ const CoinDetails: React.FC = () => {
             <Button
               variant="secondary"
               onClick={() => setSellModalOpen(false)}
+              disabled={transactionLoading}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSell}
-              disabled={!amount || Number(amount) <= 0}
+              disabled={!amount || Number(amount) <= 0 || transactionLoading}
             >
-              Sell {selectedCoin.symbol}
+              {transactionLoading ? 'Processing...' : `Sell ${selectedCoin.symbol}`}
             </Button>
           </div>
         </div>

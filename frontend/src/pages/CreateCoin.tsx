@@ -5,6 +5,7 @@ import { RootState } from '../store'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { createCoin } from '../utils/suiClient'
+import { CoinCreationParams } from '../types'
 
 const CreateCoin: React.FC = () => {
   const navigate = useNavigate()
@@ -14,8 +15,10 @@ const CreateCoin: React.FC = () => {
   const [symbol, setSymbol] = useState('')
   const [description, setDescription] = useState('')
   const [initialSupply, setInitialSupply] = useState('1000000')
+  const [imageUrl, setImageUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,15 +33,47 @@ const CreateCoin: React.FC = () => {
       return
     }
 
+    if (name.length > 50) {
+      setError('Name must be less than 50 characters')
+      return
+    }
+
+    if (symbol.length > 10) {
+      setError('Symbol must be less than 10 characters')
+      return
+    }
+
+    if (initialSupply === '0' || !initialSupply) {
+      setError('Initial supply must be greater than 0')
+      return
+    }
+
     try {
       setLoading(true)
       setError(null)
+      setSuccessMessage(null)
 
-      const result = await createCoin({ name, symbol })
+      // Create the coin creation parameters
+      const coinParams: CoinCreationParams = {
+        name,
+        symbol,
+        description,
+        initialSupply,
+        imageUrl: imageUrl || undefined
+      }
 
-      // Navigate to the new coin's page
-      navigate(`/coins/${result.id}`)
+      // Call the createCoin function
+      const result = await createCoin(coinParams)
+
+      setSuccessMessage(`Successfully created ${name} (${symbol})! Redirecting to coin page...`)
+
+      // Wait a moment before navigating to show the success message
+      setTimeout(() => {
+        // Navigate to the new coin's page
+        navigate(`/coins/${result.id}`)
+      }, 2000)
     } catch (err) {
+      console.error('Error creating coin:', err)
       setError((err as Error).message || 'Failed to create coin')
     } finally {
       setLoading(false)
@@ -63,9 +98,15 @@ const CreateCoin: React.FC = () => {
               </div>
             )}
 
+            {successMessage && (
+              <div className="bg-green-50 text-green-700 p-4 rounded-md">
+                {successMessage}
+              </div>
+            )}
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Coin Name
+                Coin Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -74,13 +115,17 @@ const CreateCoin: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 placeholder="e.g. Doge Coin"
+                maxLength={50}
                 required
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Max 50 characters
+              </p>
             </div>
 
             <div>
               <label htmlFor="symbol" className="block text-sm font-medium text-gray-700 mb-1">
-                Symbol
+                Symbol <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -108,12 +153,33 @@ const CreateCoin: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Describe your meme coin"
                 rows={3}
+                maxLength={500}
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Max 500 characters
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                Image URL (Optional)
+              </label>
+              <input
+                type="url"
+                id="imageUrl"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                placeholder="https://example.com/image.png"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                URL to your coin's logo image (recommended size: 256x256px)
+              </p>
             </div>
 
             <div>
               <label htmlFor="initialSupply" className="block text-sm font-medium text-gray-700 mb-1">
-                Initial Supply
+                Initial Supply <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -124,6 +190,9 @@ const CreateCoin: React.FC = () => {
                 min="1"
                 required
               />
+              <p className="mt-1 text-sm text-gray-500">
+                The total number of tokens that will be created initially
+              </p>
             </div>
 
             <div className="pt-4">
@@ -134,6 +203,10 @@ const CreateCoin: React.FC = () => {
               >
                 {loading ? 'Creating...' : 'Create Meme Coin'}
               </Button>
+            </div>
+
+            <div className="text-center text-sm text-gray-500 pt-2">
+              <p>Creating a coin requires a small gas fee in SUI</p>
             </div>
           </form>
         )}

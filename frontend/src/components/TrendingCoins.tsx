@@ -11,13 +11,13 @@ const TrendingCoins: React.FC = () => {
   const { trending } = useSelector((state: RootState) => state.coins)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   useEffect(() => {
     const fetchTrendingCoins = async () => {
       try {
         setLoading(true)
         setError(null)
-        
+
         const response = await api.get('/coins/trending')
         dispatch(setTrending(response.data))
       } catch (err) {
@@ -27,41 +27,49 @@ const TrendingCoins: React.FC = () => {
         setLoading(false)
       }
     }
-    
+
     fetchTrendingCoins()
-    
+
     // Refresh trending coins every 5 minutes
     const intervalId = setInterval(fetchTrendingCoins, 5 * 60 * 1000)
-    
+
     return () => clearInterval(intervalId)
   }, [dispatch])
-  
+
   if (loading && trending.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-8" data-testid="trending-coins-loading">
         <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
         <p className="mt-2 text-gray-600">Loading trending coins...</p>
       </div>
     )
   }
-  
+
   if (error && trending.length === 0) {
     return (
-      <div className="text-center py-8 text-red-500">
+      <div className="text-center py-8 text-red-500" data-testid="trending-coins-error">
         {error}
       </div>
     )
   }
-  
+
+  if (trending.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500" data-testid="trending-coins-empty">
+        No trending coins available
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="trending-coins-content">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Trending Coins</h2>
         <Link to="/explore" className="text-primary-600 hover:text-primary-700">
           View All
         </Link>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {trending.map((coin) => (
           <CoinCard key={coin.id} coin={coin} />
@@ -79,7 +87,7 @@ const CoinCard: React.FC<CoinCardProps> = ({ coin }) => {
   // Calculate 24h change (mock data for now)
   const change24h = Math.random() * 30 - 10 // Random value between -10% and +20%
   const isPositive = change24h > 0
-  
+
   return (
     <Link to={`/coins/${coin.id}`}>
       <Card className="hover:shadow-lg transition-shadow">
@@ -104,7 +112,7 @@ const CoinCard: React.FC<CoinCardProps> = ({ coin }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-500">
           <div className="flex justify-between">
             <span>Market Cap:</span>

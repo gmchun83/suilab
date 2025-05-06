@@ -12,7 +12,9 @@ jest.mock('../../../services', () => ({
     createCoin: jest.fn(),
     updateCoin: jest.fn(),
     searchCoins: jest.fn(),
-    getTotalCoins: jest.fn()
+    getTotalCoins: jest.fn(),
+    getCoinPriceHistory: jest.fn(),
+    getLeaderboard: jest.fn()
   }
 }));
 
@@ -308,6 +310,131 @@ describe('Coins Controller', () => {
       (coinService.searchCoins as jest.Mock).mockRejectedValue(error);
 
       await searchCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(responseJson).toHaveBeenCalledWith({
+        error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      });
+    });
+  });
+
+  describe('getCoinPriceHistory', () => {
+    it('should return price history for a coin', async () => {
+      const mockPriceHistory = [
+        { timestamp: 1625097600000, price: '0.00123' },
+        { timestamp: 1625184000000, price: '0.00125' }
+      ];
+      mockRequest.params = { id: '1' };
+      mockRequest.query = { period: '24h' };
+
+      (coinService.getCoinPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
+
+      await getCoinPriceHistory(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getCoinPriceHistory).toHaveBeenCalledWith('1', '24h');
+      expect(responseJson).toHaveBeenCalledWith({ data: mockPriceHistory });
+    });
+
+    it('should use default period if not specified', async () => {
+      const mockPriceHistory = [
+        { timestamp: 1625097600000, price: '0.00123' },
+        { timestamp: 1625184000000, price: '0.00125' }
+      ];
+      mockRequest.params = { id: '1' };
+      mockRequest.query = {};
+
+      (coinService.getCoinPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
+
+      await getCoinPriceHistory(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getCoinPriceHistory).toHaveBeenCalledWith('1', '24h');
+      expect(responseJson).toHaveBeenCalledWith({ data: mockPriceHistory });
+    });
+
+    it('should handle coin not found error', async () => {
+      mockRequest.params = { id: 'nonexistent' };
+      mockRequest.query = { period: '24h' };
+
+      const error = new Error(ERROR_MESSAGES.COIN_NOT_FOUND);
+      (coinService.getCoinPriceHistory as jest.Mock).mockRejectedValue(error);
+
+      await getCoinPriceHistory(mockRequest as Request, mockResponse as Response);
+
+      expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.NOT_FOUND);
+      expect(responseJson).toHaveBeenCalledWith({
+        error: ERROR_MESSAGES.COIN_NOT_FOUND
+      });
+    });
+
+    it('should handle other errors', async () => {
+      mockRequest.params = { id: '1' };
+      mockRequest.query = { period: '24h' };
+
+      const error = new Error('Test error');
+      (coinService.getCoinPriceHistory as jest.Mock).mockRejectedValue(error);
+
+      await getCoinPriceHistory(mockRequest as Request, mockResponse as Response);
+
+      expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(responseJson).toHaveBeenCalledWith({
+        error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      });
+    });
+  });
+
+  describe('getLeaderboard', () => {
+    it('should return leaderboard', async () => {
+      const mockLeaderboard = [
+        { id: '1', name: 'TopCoin1', marketCap: '1000000' },
+        { id: '2', name: 'TopCoin2', marketCap: '900000' }
+      ];
+      mockRequest.query = { limit: '10', sortBy: 'marketCap' };
+
+      (coinService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+      await getLeaderboard(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getLeaderboard).toHaveBeenCalledWith(10, 'marketCap');
+      expect(responseJson).toHaveBeenCalledWith({ data: mockLeaderboard });
+    });
+
+    it('should use default parameters if not specified', async () => {
+      const mockLeaderboard = [
+        { id: '1', name: 'TopCoin1', marketCap: '1000000' },
+        { id: '2', name: 'TopCoin2', marketCap: '900000' }
+      ];
+      mockRequest.query = {};
+
+      (coinService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+      await getLeaderboard(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getLeaderboard).toHaveBeenCalledWith(10, 'marketCap');
+      expect(responseJson).toHaveBeenCalledWith({ data: mockLeaderboard });
+    });
+
+    it('should handle custom parameters', async () => {
+      const mockLeaderboard = [
+        { id: '1', name: 'TopCoin1', price: '0.00123' },
+        { id: '2', name: 'TopCoin2', price: '0.00120' }
+      ];
+      mockRequest.query = { limit: '5', sortBy: 'price' };
+
+      (coinService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+      await getLeaderboard(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getLeaderboard).toHaveBeenCalledWith(5, 'price');
+      expect(responseJson).toHaveBeenCalledWith({ data: mockLeaderboard });
+    });
+
+    it('should handle errors', async () => {
+      mockRequest.query = { limit: '10', sortBy: 'marketCap' };
+
+      const error = new Error('Test error');
+      (coinService.getLeaderboard as jest.Mock).mockRejectedValue(error);
+
+      await getLeaderboard(mockRequest as Request, mockResponse as Response);
 
       expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR);
       expect(responseJson).toHaveBeenCalledWith({

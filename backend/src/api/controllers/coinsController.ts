@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { logger } from '../../utils/logger';
 import { coinService } from '../../services';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../../constants';
+import { PricePoint } from '../../types';
 
 /**
  * Get all coins with pagination
@@ -150,6 +151,52 @@ export const searchCoins = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error(`Error searching coins:`, error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+    });
+  }
+};
+
+/**
+ * Get coin price history
+ */
+export const getCoinPriceHistory = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const period = req.query.period as string || '24h'; // Default to 24 hours
+
+    try {
+      const priceHistory = await coinService.getCoinPriceHistory(id, period);
+      res.json({ data: priceHistory });
+    } catch (error) {
+      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          error: ERROR_MESSAGES.COIN_NOT_FOUND
+        });
+      }
+      throw error;
+    }
+  } catch (error) {
+    logger.error(`Error fetching price history for coin with ID ${req.params.id}:`, error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+    });
+  }
+};
+
+/**
+ * Get leaderboard
+ */
+export const getLeaderboard = async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const sortBy = req.query.sortBy as string || 'marketCap';
+
+    const leaderboard = await coinService.getLeaderboard(limit, sortBy);
+
+    res.json({ data: leaderboard });
+  } catch (error) {
+    logger.error('Error fetching leaderboard:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
     });

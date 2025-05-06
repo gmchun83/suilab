@@ -13,7 +13,9 @@ jest.mock('../../services', () => ({
     createCoin: jest.fn(),
     updateCoin: jest.fn(),
     searchCoins: jest.fn(),
-    getTotalCoins: jest.fn()
+    getTotalCoins: jest.fn(),
+    getCoinPriceHistory: jest.fn(),
+    getLeaderboard: jest.fn()
   }
 }));
 
@@ -33,7 +35,7 @@ describe('Coin API Endpoints', () => {
         { id: '1', name: 'TestCoin1', symbol: 'TC1' },
         { id: '2', name: 'TestCoin2', symbol: 'TC2' }
       ];
-      
+
       (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
       (coinService.getTotalCoins as jest.Mock).mockResolvedValue(2);
 
@@ -54,7 +56,7 @@ describe('Coin API Endpoints', () => {
 
     it('should handle custom pagination parameters', async () => {
       const mockCoins = [{ id: '3', name: 'TestCoin3', symbol: 'TC3' }];
-      
+
       (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
       (coinService.getTotalCoins as jest.Mock).mockResolvedValue(3);
 
@@ -87,7 +89,7 @@ describe('Coin API Endpoints', () => {
   describe('GET /api/coins/:id', () => {
     it('should return a coin by ID', async () => {
       const mockCoin = { id: '1', name: 'TestCoin', symbol: 'TC' };
-      
+
       (coinService.getCoinById as jest.Mock).mockResolvedValue(mockCoin);
 
       const response = await request(app).get('/api/coins/1');
@@ -126,7 +128,7 @@ describe('Coin API Endpoints', () => {
         { id: '1', name: 'TrendingCoin1', symbol: 'TC1' },
         { id: '2', name: 'TrendingCoin2', symbol: 'TC2' }
       ];
-      
+
       (coinService.getTrendingCoins as jest.Mock).mockResolvedValue(mockTrendingCoins);
 
       const response = await request(app).get('/api/coins/trending');
@@ -142,7 +144,7 @@ describe('Coin API Endpoints', () => {
         { id: '2', name: 'TrendingCoin2', symbol: 'TC2' },
         { id: '3', name: 'TrendingCoin3', symbol: 'TC3' }
       ];
-      
+
       (coinService.getTrendingCoins as jest.Mock).mockResolvedValue(mockTrendingCoins);
 
       const response = await request(app).get('/api/coins/trending?limit=3');
@@ -172,9 +174,9 @@ describe('Coin API Endpoints', () => {
         objectId: 'obj123',
         creatorAddress: '0x123'
       };
-      
+
       const mockCreatedCoin = { id: '1', ...mockCoinData };
-      
+
       (coinService.createCoin as jest.Mock).mockResolvedValue(mockCreatedCoin);
 
       const response = await request(app)
@@ -193,7 +195,7 @@ describe('Coin API Endpoints', () => {
         objectId: 'obj123',
         creatorAddress: '0x123'
       };
-      
+
       (coinService.createCoin as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_ALREADY_EXISTS));
 
       const response = await request(app)
@@ -213,7 +215,7 @@ describe('Coin API Endpoints', () => {
         objectId: 'obj123',
         creatorAddress: '0x123'
       };
-      
+
       (coinService.createCoin as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const response = await request(app)
@@ -233,9 +235,9 @@ describe('Coin API Endpoints', () => {
         name: 'UpdatedCoin',
         symbol: 'UC'
       };
-      
+
       const mockUpdatedCoin = { id: '1', ...mockCoinData };
-      
+
       (coinService.updateCoin as jest.Mock).mockResolvedValue(mockUpdatedCoin);
 
       const response = await request(app)
@@ -252,7 +254,7 @@ describe('Coin API Endpoints', () => {
         name: 'UpdatedCoin',
         symbol: 'UC'
       };
-      
+
       (coinService.updateCoin as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_NOT_FOUND));
 
       const response = await request(app)
@@ -270,7 +272,7 @@ describe('Coin API Endpoints', () => {
         name: 'UpdatedCoin',
         symbol: 'UC'
       };
-      
+
       (coinService.updateCoin as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const response = await request(app)
@@ -290,7 +292,7 @@ describe('Coin API Endpoints', () => {
         { id: '1', name: 'TestCoin', symbol: 'TC' },
         { id: '2', name: 'TestToken', symbol: 'TT' }
       ];
-      
+
       (coinService.searchCoins as jest.Mock).mockResolvedValue(mockCoins);
 
       const response = await request(app).get('/api/coins/search?q=Test');
@@ -318,7 +320,7 @@ describe('Coin API Endpoints', () => {
 
     it('should handle custom pagination parameters', async () => {
       const mockCoins = [{ id: '3', name: 'TestCoin3', symbol: 'TC3' }];
-      
+
       (coinService.searchCoins as jest.Mock).mockResolvedValue(mockCoins);
 
       const response = await request(app).get('/api/coins/search?q=Test&page=2&limit=5');
@@ -339,6 +341,103 @@ describe('Coin API Endpoints', () => {
       (coinService.searchCoins as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const response = await request(app).get('/api/coins/search?q=Test');
+
+      expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(response.body).toEqual({
+        error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      });
+    });
+  });
+
+  describe('GET /api/coins/:id/price-history', () => {
+    it('should return price history for a coin', async () => {
+      const mockPriceHistory = [
+        { timestamp: 1625097600000, price: '0.00123' },
+        { timestamp: 1625184000000, price: '0.00125' }
+      ];
+
+      (coinService.getCoinPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
+
+      const response = await request(app).get('/api/coins/1/price-history?period=24h');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ data: mockPriceHistory });
+      expect(coinService.getCoinPriceHistory).toHaveBeenCalledWith('1', '24h');
+    });
+
+    it('should use default period if not specified', async () => {
+      const mockPriceHistory = [
+        { timestamp: 1625097600000, price: '0.00123' },
+        { timestamp: 1625184000000, price: '0.00125' }
+      ];
+
+      (coinService.getCoinPriceHistory as jest.Mock).mockResolvedValue(mockPriceHistory);
+
+      const response = await request(app).get('/api/coins/1/price-history');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ data: mockPriceHistory });
+      expect(coinService.getCoinPriceHistory).toHaveBeenCalledWith('1', '24h');
+    });
+
+    it('should handle coin not found error', async () => {
+      (coinService.getCoinPriceHistory as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_NOT_FOUND));
+
+      const response = await request(app).get('/api/coins/nonexistent/price-history');
+
+      expect(response.status).toBe(HTTP_STATUS.NOT_FOUND);
+      expect(response.body).toEqual({
+        error: ERROR_MESSAGES.COIN_NOT_FOUND
+      });
+    });
+
+    it('should handle other errors', async () => {
+      (coinService.getCoinPriceHistory as jest.Mock).mockRejectedValue(new Error('Test error'));
+
+      const response = await request(app).get('/api/coins/1/price-history');
+
+      expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(response.body).toEqual({
+        error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      });
+    });
+  });
+
+  describe('GET /api/coins/leaderboard', () => {
+    it('should return leaderboard', async () => {
+      const mockLeaderboard = [
+        { id: '1', name: 'TopCoin1', marketCap: '1000000' },
+        { id: '2', name: 'TopCoin2', marketCap: '900000' }
+      ];
+
+      (coinService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+      const response = await request(app).get('/api/coins/leaderboard');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ data: mockLeaderboard });
+      expect(coinService.getLeaderboard).toHaveBeenCalledWith(10, 'marketCap');
+    });
+
+    it('should handle custom parameters', async () => {
+      const mockLeaderboard = [
+        { id: '1', name: 'TopCoin1', price: '0.00123' },
+        { id: '2', name: 'TopCoin2', price: '0.00120' }
+      ];
+
+      (coinService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
+
+      const response = await request(app).get('/api/coins/leaderboard?limit=5&sortBy=price');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ data: mockLeaderboard });
+      expect(coinService.getLeaderboard).toHaveBeenCalledWith(5, 'price');
+    });
+
+    it('should handle errors', async () => {
+      (coinService.getLeaderboard as jest.Mock).mockRejectedValue(new Error('Test error'));
+
+      const response = await request(app).get('/api/coins/leaderboard');
 
       expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
       expect(response.body).toEqual({

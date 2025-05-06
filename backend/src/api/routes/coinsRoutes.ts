@@ -5,7 +5,9 @@ import {
   getTrendingCoins,
   createCoin,
   updateCoin,
-  searchCoins
+  searchCoins,
+  getCoinPriceHistory,
+  getLeaderboard
 } from '../controllers/coinsController';
 import {
   validateCreateCoin,
@@ -21,7 +23,9 @@ const router = express.Router();
 router.get('/coins', rateLimitMiddleware, validatePagination, getCoins);
 router.get('/coins/trending', rateLimitMiddleware, getTrendingCoins);
 router.get('/coins/search', rateLimitMiddleware, validateSearch, searchCoins);
+router.get('/coins/leaderboard', rateLimitMiddleware, getLeaderboard);
 router.get('/coins/:id', rateLimitMiddleware, getCoinById);
+router.get('/coins/:id/price-history', rateLimitMiddleware, getCoinPriceHistory);
 
 // Protected routes (require authentication)
 router.post('/coins', rateLimitMiddleware, authMiddleware, validateCreateCoin, createCoin);

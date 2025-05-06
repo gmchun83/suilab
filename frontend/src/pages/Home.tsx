@@ -1,18 +1,38 @@
-import React, { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { fetchAllCoins } from '../store/slices/coinsSlice'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import TrendingCoins from '../components/TrendingCoins'
 import Leaderboard from '../components/Leaderboard'
+import { RootState } from '../store'
 
 const Home: React.FC = () => {
   const dispatch = useDispatch()
+  const { connected } = useSelector((state: RootState) => state.wallet)
+  const { loading: coinsLoading, error: coinsError } = useSelector((state: RootState) => state.coins)
+  const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
-    dispatch(fetchAllCoins() as any)
+    // Fetch data when component mounts
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchAllCoins() as any)
+      } catch (error) {
+        console.error('Error fetching home page data:', error)
+      } finally {
+        setPageLoading(false)
+      }
+    }
+
+    fetchData()
   }, [dispatch])
+
+  // Function to refresh data
+  const handleRefresh = () => {
+    dispatch(fetchAllCoins() as any)
+  }
 
   return (
     <div className="space-y-8">
@@ -22,14 +42,32 @@ const Home: React.FC = () => {
           Create, trade, and grow your meme coin community with our easy-to-use platform.
         </p>
         <div className="flex justify-center space-x-4">
-          <Link to="/create">
-            <Button size="lg" variant="secondary">Create Coin</Button>
+          <Link to={connected ? "/create" : "/wallet"}>
+            <Button size="lg" variant="secondary">
+              {connected ? "Create Coin" : "Connect Wallet"}
+            </Button>
           </Link>
           <Link to="/explore">
             <Button size="lg" variant="outline" className="bg-white">Explore Coins</Button>
           </Link>
         </div>
       </section>
+
+      {/* Refresh button */}
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="text-primary-600 hover:text-primary-800 flex items-center"
+          aria-label="Refresh data"
+          disabled={coinsLoading}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-1 ${coinsLoading ? 'animate-spin' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+          </svg>
+          {coinsLoading ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
 
       <section>
         <TrendingCoins />
@@ -81,6 +119,19 @@ const Home: React.FC = () => {
             </p>
           </div>
         </Card>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-gray-100 rounded-xl p-8 text-center mt-12">
+        <h2 className="text-2xl font-bold mb-4">Ready to launch your meme coin?</h2>
+        <p className="text-lg mb-6">
+          Join the growing community of creators on PumpSui.
+        </p>
+        <Link to={connected ? "/create" : "/wallet"}>
+          <Button size="lg">
+            {connected ? "Create Your Coin" : "Connect Wallet"}
+          </Button>
+        </Link>
       </section>
     </div>
   )

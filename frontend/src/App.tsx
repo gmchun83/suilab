@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { Header, Footer } from './components/layout';
 import routes from './config/routes';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import { ToastProvider } from './components/common/ToastProvider';
 
 // Lazy load pages for better performance
 const Home = lazy(() => import('./pages/Home'));
@@ -43,28 +45,37 @@ const Loading = () => (
 );
 
 function App() {
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="container mx-auto py-8 flex-grow">
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            {routes.map((route) => {
-              const Component = componentMap[route.component];
-              return (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={<Component />}
-                />
-              );
-            })}
-          </Routes>
-        </Suspense>
-      </main>
-      <Footer />
-    </div>
+    <ErrorBoundary>
+      <ToastProvider>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="container mx-auto py-8 flex-grow">
+            <ErrorBoundary>
+              <Suspense fallback={<Loading />}>
+                <Routes>
+                  {routes.map((route) => {
+                    const Component = componentMap[route.component];
+                    return (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        element={
+                          <ErrorBoundary>
+                            <Component />
+                          </ErrorBoundary>
+                        }
+                      />
+                    );
+                  })}
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </main>
+          <Footer />
+        </div>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
