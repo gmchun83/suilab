@@ -1,3 +1,6 @@
+// Export DEX types
+export * from './dex';
+
 // Coin related types
 export interface Coin {
   id: string;
@@ -11,6 +14,11 @@ export interface Coin {
   imageUrl?: string;
   createdAt: string;
   marketCap?: string;
+  dexListed?: boolean;
+  dexPoolId?: string;
+  poolId?: string;
+  burnedSupply?: string;
+  holders?: number;
 }
 
 export interface CoinDetails extends Coin {
@@ -20,6 +28,7 @@ export interface CoinDetails extends Coin {
   priceHistory: PricePoint[];
   liquidity?: string;
   dexUrl?: string;
+  pools?: PoolInfo[];
 }
 
 export interface PricePoint {

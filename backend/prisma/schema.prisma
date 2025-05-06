@@ -19,10 +19,17 @@ model Coin {
   creatorAddress String
   supply        BigInt
   price         Float
+  marketCap     String?       // Market cap in SUI
   imageUrl      String?
+  poolId        String?       // Bonding curve pool ID
+  dexPoolId     String?       // DEX pool ID
+  dexListed     Boolean       @default(false)
+  holders       Int           @default(0)
+  burnedSupply  BigInt        @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   transactions  Transaction[]
+  pools         Pool[]
 }
 
 model Transaction {
@@ -35,4 +42,17 @@ model Transaction {
   price         Float
   walletAddress String
   timestamp     DateTime @default(now())
+}
+
+model Pool {
+  id             String   @id @default(uuid())
+  objectId       String   @unique // Sui object ID
+  coinId         String
+  coin           Coin     @relation(fields: [coinId], references: [id])
+  type           String   // BONDING_CURVE, DEX
+  suiBalance     String   // BigInt as string
+  tokenBalance   String   // BigInt as string
+  creatorAddress String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

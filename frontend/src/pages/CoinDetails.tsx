@@ -8,11 +8,15 @@ import Button from '../components/common/Button'
 import Modal from '../components/common/Modal'
 import PriceChart from '../components/PriceChart'
 import TransactionHistory from '../components/TransactionHistory'
+import DexPoolInfo from '../components/DexPoolInfo'
+import DexPoolCreator from '../components/DexPoolCreator'
+import MarketCapInfo from '../components/MarketCapInfo'
 import { Transaction } from '../types'
 import { buyCoin, sellCoin } from '../utils/suiClient'
 import { fetchTransactions } from '../utils/api'
 import { useToast } from '../components/common/ToastProvider'
 import { getUserFriendlyErrorMessage } from '../utils/errorHandler'
+import { useDex } from '../hooks'
 
 const CoinDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -20,6 +24,7 @@ const CoinDetails: React.FC = () => {
   const { selectedCoin, loading, error } = useSelector((state: RootState) => state.coins)
   const { connected, address } = useSelector((state: RootState) => state.wallet)
   const { showToast } = useToast()
+  const { loadData } = useDex(id)
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [transactionsLoading, setTransactionsLoading] = useState(false)
@@ -34,8 +39,9 @@ const CoinDetails: React.FC = () => {
     if (id) {
       dispatch(fetchCoinDetails(id) as any)
       loadTransactions(id)
+      loadData() // Load DEX data
     }
-  }, [dispatch, id])
+  }, [dispatch, id, loadData])
 
   // Show error toast if there's an error from Redux
   useEffect(() => {
@@ -220,22 +226,30 @@ const CoinDetails: React.FC = () => {
 
         <Card>
           <div className="text-center">
-            <div className="text-gray-500 mb-1">Market Cap</div>
+            <div className="text-gray-500 mb-1">Supply</div>
             <div className="text-2xl font-bold">
-              ${(Number(selectedCoin.supply) * selectedCoin.price).toLocaleString()}
+              {Number(selectedCoin.supply).toLocaleString()} {selectedCoin.symbol}
             </div>
+            {selectedCoin.burnedSupply && (
+              <div className="text-gray-500 text-sm">
+                {Number(selectedCoin.burnedSupply).toLocaleString()} burned
+              </div>
+            )}
           </div>
         </Card>
 
         <Card>
           <div className="text-center">
-            <div className="text-gray-500 mb-1">Supply</div>
+            <div className="text-gray-500 mb-1">Holders</div>
             <div className="text-2xl font-bold">
-              {Number(selectedCoin.supply).toLocaleString()} {selectedCoin.symbol}
+              {selectedCoin.holders?.toLocaleString() || 'N/A'}
             </div>
           </div>
         </Card>
       </div>
+
+      {/* Market Cap Info */}
+      <MarketCapInfo coin={selectedCoin} />
 
       {/* Price Chart */}
       <PriceChart coinId={selectedCoin.id} coinSymbol={selectedCoin.symbol} />
@@ -258,6 +272,22 @@ const CoinDetails: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* DEX Pool Info */}
+      <DexPoolInfo coin={selectedCoin} />
+
+      {/* DEX Pool Creator - Only show if user is connected and is the coin creator */}
+      {connected && address === selectedCoin.creatorAddress && !selectedCoin.dexListed && (
+        <DexPoolCreator
+          coin={selectedCoin}
+          onSuccess={() => {
+            // Refresh coin details and DEX data
+            dispatch(fetchCoinDetails(id) as any)
+            loadData()
+            showToast('DEX pool created successfully!', 'success')
+          }}
+        />
+      )}
 
       {/* Transaction History */}
       <TransactionHistory coinId={selectedCoin.id} coinSymbol={selectedCoin.symbol} />
