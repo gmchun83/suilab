@@ -1,15 +1,25 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { RootState } from '../store'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import { createCoin } from '../utils/suiClient'
 import { CoinCreationParams } from '../types'
+import useWallet from '../hooks/useWallet'
+import { formatSUI } from '../utils/formatting'
 
 const CreateCoin: React.FC = () => {
   const navigate = useNavigate()
-  const { connected } = useSelector((state: RootState) => state.wallet)
+  const { connected, address, balance } = useWallet()
+
+  // Redirect to wallet page if not connected
+  useEffect(() => {
+    if (!connected) {
+      const timer = setTimeout(() => {
+        navigate('/wallet')
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [connected, navigate])
 
   const [name, setName] = useState('')
   const [symbol, setSymbol] = useState('')
@@ -83,6 +93,21 @@ const CreateCoin: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Create Meme Coin</h1>
+
+      {connected && address && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">Wallet Connected</h2>
+              <p className="text-sm text-gray-500">{address}</p>
+            </div>
+            <div className="mt-2 sm:mt-0">
+              <span className="text-sm text-gray-500">Balance: </span>
+              <span className="font-medium">{formatSUI(balance || '0')} SUI</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Card>
         {!connected ? (
@@ -205,8 +230,21 @@ const CreateCoin: React.FC = () => {
               </Button>
             </div>
 
-            <div className="text-center text-sm text-gray-500 pt-2">
-              <p>Creating a coin requires a small gas fee in SUI</p>
+            <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Transaction Details</h3>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Estimated Gas Fee:</span>
+                <span className="font-medium">~0.001 SUI</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Your Balance:</span>
+                <span className="font-medium">{formatSUI(balance || '0')} SUI</span>
+              </div>
+              {Number(balance || 0) < 1000000 && (
+                <div className="mt-2 text-xs text-amber-600">
+                  <p>Your balance may be too low to cover the transaction fee. Consider adding more SUI to your wallet.</p>
+                </div>
+              )}
             </div>
           </form>
         )}

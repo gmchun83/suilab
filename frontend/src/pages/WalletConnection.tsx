@@ -1,16 +1,9 @@
-import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RootState } from '../store'
-import { 
-  connectWalletStart, 
-  connectWalletSuccess, 
-  connectWalletFailure, 
-  disconnectWallet 
-} from '../store/slices/walletSlice'
-import { connectWallet } from '../utils/suiClient'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
+import useWallet from '../hooks/useWallet'
+import { formatSUI } from '../utils/formatting'
 
 interface WalletOption {
   id: string
@@ -21,33 +14,59 @@ interface WalletOption {
 }
 
 const WalletConnection: React.FC = () => {
-  const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { connected, address, loading, error } = useSelector((state: RootState) => state.wallet)
+  const { connected, address, balance, loading, error, connect, disconnect } = useWallet()
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null)
-  
-  // Mock wallet options - in a real app, these would be detected from the browser
+  const [walletDetected, setWalletDetected] = useState<boolean>(false)
+
+  // Check if wallet is available in the browser
+  useEffect(() => {
+    const checkWalletAvailability = () => {
+      const hasSuiWallet = !!window.suiWallet
+      setWalletDetected(hasSuiWallet)
+
+      // If Sui wallet is detected, preselect it
+      if (hasSuiWallet) {
+        setSelectedWallet('sui-wallet')
+      }
+    }
+
+    checkWalletAvailability()
+  }, [])
+
+  // Redirect to home if already connected
+  useEffect(() => {
+    if (connected && address) {
+      const timer = setTimeout(() => {
+        navigate('/')
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [connected, address, navigate])
+
+  // Wallet options
   const walletOptions: WalletOption[] = [
     {
       id: 'sui-wallet',
       name: 'Sui Wallet',
       icon: 'https://assets.website-files.com/61a9a8412ca7053e3ff6f2ef/6434d419cfb6b4a058d4cb2c_sui-favicon.svg',
       description: 'The official wallet for the Sui blockchain',
-      available: true
+      available: walletDetected
     },
     {
       id: 'ethos-wallet',
       name: 'Ethos Wallet',
       icon: 'https://ethoswallet.xyz/assets/images/ethos-logo.svg',
       description: 'A user-friendly wallet for Sui',
-      available: true
+      available: false
     },
     {
       id: 'suiet-wallet',
       name: 'Suiet Wallet',
       icon: 'https://suiet.app/favicon.ico',
       description: 'A comprehensive wallet for Sui ecosystem',
-      available: true
+      available: false
     },
     {
       id: 'martian-wallet',
@@ -57,36 +76,31 @@ const WalletConnection: React.FC = () => {
       available: false
     }
   ]
-  
+
   const handleSelectWallet = (walletId: string) => {
     setSelectedWallet(walletId)
   }
-  
+
   const handleConnect = async () => {
     if (!selectedWallet) {
       return
     }
-    
+
     try {
-      dispatch(connectWalletStart())
-      const walletData = await connectWallet()
-      dispatch(connectWalletSuccess(walletData))
-      
-      // Redirect to home page after successful connection
-      navigate('/')
+      await connect()
     } catch (err) {
-      dispatch(connectWalletFailure((err as Error).message))
+      console.error('Connection error:', err)
     }
   }
-  
+
   const handleDisconnect = () => {
-    dispatch(disconnectWallet())
+    disconnect()
   }
-  
+
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center">Connect Your Wallet</h1>
-      
+
       <Card>
         {connected ? (
           <div className="text-center py-8">
@@ -99,33 +113,75 @@ const WalletConnection: React.FC = () => {
             <p className="text-gray-700 mb-2">
               Your wallet is connected to PumpSui.
             </p>
-            <div className="bg-gray-100 rounded-md p-3 mb-6 inline-block">
+            <div className="bg-gray-100 rounded-md p-3 mb-2 inline-block">
               <code className="text-gray-800 font-mono">
                 {address}
               </code>
             </div>
-            <Button
-              onClick={handleDisconnect}
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
-              Disconnect Wallet
-            </Button>
+            <div className="mb-6">
+              <p className="text-sm text-gray-500 mb-1">Balance</p>
+              <p className="text-xl font-bold">{formatSUI(balance || '0')} SUI</p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-3">
+              <Button
+                onClick={() => navigate('/portfolio')}
+                className="w-full sm:w-auto"
+              >
+                Go to Portfolio
+              </Button>
+              <Button
+                onClick={handleDisconnect}
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                Disconnect Wallet
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mt-6">
+              Redirecting to home page in a moment...
+            </p>
           </div>
         ) : (
           <div>
             <p className="text-gray-700 mb-6">
               Connect your wallet to create, buy, and sell meme coins on the Sui blockchain.
             </p>
-            
+
             {error && (
               <div className="bg-red-50 text-red-700 p-4 rounded-md mb-6">
                 {error}
               </div>
             )}
-            
+
             <div className="space-y-4 mb-6">
               <h2 className="text-lg font-medium">Select a Wallet</h2>
+
+              {!walletDetected && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-yellow-800">No Sui Wallet Detected</h3>
+                      <div className="mt-2 text-sm text-yellow-700">
+                        <p>You need to install a Sui wallet to use PumpSui. We recommend the official Sui Wallet.</p>
+                        <a
+                          href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-block text-yellow-800 font-medium hover:text-yellow-900 underline"
+                        >
+                          Install Sui Wallet
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {walletOptions.map((wallet) => (
                 <div
                   key={wallet.id}
@@ -144,13 +200,21 @@ const WalletConnection: React.FC = () => {
                       <h3 className="font-medium">{wallet.name}</h3>
                       <p className="text-sm text-gray-500">{wallet.description}</p>
                     </div>
-                    {!wallet.available && (
+                    {!wallet.available && wallet.id === 'sui-wallet' ? (
+                      <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
+                        Not Installed
+                      </span>
+                    ) : !wallet.available ? (
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         Coming Soon
                       </span>
+                    ) : (
+                      <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+                        Detected
+                      </span>
                     )}
                     {selectedWallet === wallet.id && (
-                      <svg className="h-5 w-5 text-primary-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="h-5 w-5 text-primary-600 ml-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -158,7 +222,7 @@ const WalletConnection: React.FC = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3">
               <Button
                 variant="outline"
@@ -167,18 +231,29 @@ const WalletConnection: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleConnect}
-                disabled={!selectedWallet || loading}
-                className="w-full sm:w-auto"
-              >
-                {loading ? 'Connecting...' : 'Connect Wallet'}
-              </Button>
+              {!walletDetected ? (
+                <a
+                  href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 w-full sm:w-auto"
+                >
+                  Install Sui Wallet
+                </a>
+              ) : (
+                <Button
+                  onClick={handleConnect}
+                  disabled={!selectedWallet || loading}
+                  className="w-full sm:w-auto"
+                >
+                  {loading ? 'Connecting...' : 'Connect Wallet'}
+                </Button>
+              )}
             </div>
           </div>
         )}
       </Card>
-      
+
       <div className="mt-8 text-center">
         <h2 className="text-xl font-bold mb-4">New to Sui Blockchain?</h2>
         <p className="text-gray-700 mb-4">

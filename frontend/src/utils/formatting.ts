@@ -11,7 +11,7 @@ export const formatCurrency = (
   decimals = 2
 ): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  
+
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
@@ -31,7 +31,7 @@ export const formatNumber = (
   decimals = 2
 ): string => {
   const numValue = typeof value === 'string' ? parseFloat(value) : value;
-  
+
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -52,7 +52,7 @@ export const formatAddress = (
 ): string => {
   if (!address) return '';
   if (address.length <= startChars + endChars) return address;
-  
+
   return `${address.substring(0, startChars)}...${address.substring(
     address.length - endChars
   )}`;
@@ -69,13 +69,13 @@ export const formatDate = (
   format: 'short' | 'medium' | 'long' = 'medium'
 ): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: format === 'short' ? 'numeric' : format === 'medium' ? 'short' : 'long',
     day: 'numeric',
   };
-  
+
   return new Intl.DateTimeFormat('en-US', options).format(dateObj);
 };
 
@@ -90,7 +90,7 @@ export const formatDateTime = (
   format: 'short' | 'medium' | 'long' = 'medium'
 ): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: format === 'short' ? 'numeric' : format === 'medium' ? 'short' : 'long',
@@ -99,8 +99,27 @@ export const formatDateTime = (
     minute: 'numeric',
     second: format === 'long' ? 'numeric' : undefined,
   };
-  
+
   return new Intl.DateTimeFormat('en-US', options).format(dateObj);
+};
+
+/**
+ * Format a SUI amount (converting from MIST to SUI)
+ * @param amount - The amount in MIST (10^9 MIST = 1 SUI)
+ * @param decimals - The number of decimal places (default: 4)
+ * @returns Formatted SUI amount
+ */
+export const formatSUI = (
+  amount: string | number,
+  decimals = 4
+): string => {
+  // Convert to number if it's a string
+  const amountNum = typeof amount === 'string' ? BigInt(amount) : BigInt(amount.toString());
+
+  // Convert from MIST to SUI (1 SUI = 10^9 MIST)
+  const suiAmount = Number(amountNum) / 1_000_000_000;
+
+  return formatNumber(suiAmount, decimals);
 };
 
 export default {
@@ -109,4 +128,5 @@ export default {
   formatAddress,
   formatDate,
   formatDateTime,
+  formatSUI,
 };

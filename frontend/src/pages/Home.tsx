@@ -7,10 +7,11 @@ import Button from '../components/common/Button'
 import TrendingCoins from '../components/TrendingCoins'
 import Leaderboard from '../components/Leaderboard'
 import { RootState } from '../store'
+import useWallet from '../hooks/useWallet'
 
 const Home: React.FC = () => {
   const dispatch = useDispatch()
-  const { connected } = useSelector((state: RootState) => state.wallet)
+  const { connected } = useWallet()
   const { loading: coinsLoading, error: coinsError } = useSelector((state: RootState) => state.coins)
   const [pageLoading, setPageLoading] = useState(true)
 
