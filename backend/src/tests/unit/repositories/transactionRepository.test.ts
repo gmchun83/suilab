@@ -9,8 +9,12 @@ jest.mock('../../../config', () => ({
     transaction: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       create: jest.fn(),
-      count: jest.fn()
+      update: jest.fn(),
+      count: jest.fn(),
+      groupBy: jest.fn(),
+      aggregate: jest.fn()
     }
   }
 }));
@@ -219,6 +223,150 @@ describe('Transaction Repository', () => {
       (prisma.transaction.count as jest.Mock).mockRejectedValue(error);
 
       await expect(transactionRepository.countByCoinId('coin1')).rejects.toThrow('Database error');
+    });
+  });
+
+  describe('findByTxId', () => {
+    it('should return a transaction by transaction hash', async () => {
+      const mockTransaction = { id: '1', txId: '0xabc123', coinId: 'coin1', amount: '100' };
+
+      (prisma.transaction.findUnique as jest.Mock).mockResolvedValue(mockTransaction);
+
+      const result = await transactionRepository.findByTxId('0xabc123');
+
+      expect(prisma.transaction.findUnique).toHaveBeenCalledWith({
+        where: { txId: '0xabc123' }
+      });
+      expect(result).toEqual(mockTransaction);
+    });
+
+    it('should return null if transaction not found', async () => {
+      (prisma.transaction.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await transactionRepository.findByTxId('nonexistent');
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('Database error');
+      (prisma.transaction.findUnique as jest.Mock).mockRejectedValue(error);
+
+      await expect(transactionRepository.findByTxId('0xabc123')).rejects.toThrow('Database error');
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTransactionStats', () => {
+    it('should return transaction statistics for a coin', async () => {
+      const mockStats = {
+        totalVolume: BigInt(1000),
+        buyCount: 5,
+        sellCount: 3
+      };
+
+      (prisma.transaction.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: BigInt(1000) }
+      });
+
+      (prisma.transaction.count as jest.Mock)
+        .mockResolvedValueOnce(5) // Buy count
+        .mockResolvedValueOnce(3); // Sell count
+
+      const result = await transactionRepository.getTransactionStats('coin1');
+
+      expect(prisma.transaction.aggregate).toHaveBeenCalledWith({
+        where: { coinId: 'coin1' },
+        _sum: { amount: true }
+      });
+
+      expect(prisma.transaction.count).toHaveBeenCalledWith({
+        where: {
+          coinId: 'coin1',
+          type: TransactionType.BUY
+        }
+      });
+
+      expect(prisma.transaction.count).toHaveBeenCalledWith({
+        where: {
+          coinId: 'coin1',
+          type: TransactionType.SELL
+        }
+      });
+
+      expect(result).toEqual({
+        totalVolume: '1000',
+        buyCount: 5,
+        sellCount: 3
+      });
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('Database error');
+      (prisma.transaction.aggregate as jest.Mock).mockRejectedValue(error);
+
+      await expect(transactionRepository.getTransactionStats('coin1')).rejects.toThrow('Database error');
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('getRecentTransactions', () => {
+    it('should return recent transactions across all coins', async () => {
+      const mockTransactions = [
+        { id: '1', coinId: 'coin1', amount: '100', timestamp: new Date() },
+        { id: '2', coinId: 'coin2', amount: '200', timestamp: new Date() }
+      ];
+
+      (prisma.transaction.findMany as jest.Mock).mockResolvedValue(mockTransactions);
+
+      const result = await transactionRepository.getRecentTransactions(5);
+
+      expect(prisma.transaction.findMany).toHaveBeenCalledWith({
+        take: 5,
+        orderBy: { timestamp: 'desc' },
+        include: { coin: true }
+      });
+      expect(result).toEqual(mockTransactions);
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('Database error');
+      (prisma.transaction.findMany as jest.Mock).mockRejectedValue(error);
+
+      await expect(transactionRepository.getRecentTransactions(5)).rejects.toThrow('Database error');
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTransactionsByType', () => {
+    it('should return transactions filtered by type', async () => {
+      const mockTransactions = [
+        { id: '1', coinId: 'coin1', type: TransactionType.BUY, amount: '100' },
+        { id: '2', coinId: 'coin1', type: TransactionType.BUY, amount: '200' }
+      ];
+
+      (prisma.transaction.findMany as jest.Mock).mockResolvedValue(mockTransactions);
+
+      const result = await transactionRepository.getTransactionsByType('coin1', TransactionType.BUY, 1, 10);
+
+      expect(prisma.transaction.findMany).toHaveBeenCalledWith({
+        where: {
+          coinId: 'coin1',
+          type: TransactionType.BUY
+        },
+        skip: 0,
+        take: 10,
+        orderBy: { timestamp: 'desc' }
+      });
+      expect(result).toEqual(mockTransactions);
+    });
+
+    it('should handle errors', async () => {
+      const error = new Error('Database error');
+      (prisma.transaction.findMany as jest.Mock).mockRejectedValue(error);
+
+      await expect(transactionRepository.getTransactionsByType('coin1', TransactionType.BUY, 1, 10)).rejects.toThrow('Database error');
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 });

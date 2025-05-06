@@ -44,3 +44,11 @@ build/
 # Misc
 .cache/
 .turbo/
+
+# Large binary files
+backend/external-crates/
+backend/sui.tgz
+backend/target/
+contracts/Dockerfile
+contracts/docker-compose.yml
+contracts/run-tests.sh

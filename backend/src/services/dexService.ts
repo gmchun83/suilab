@@ -3,7 +3,7 @@ import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { bcs } from '@mysten/sui.js/bcs'
 import axios from 'axios'
 import logger from '../utils/logger'
-import { prisma } from '../utils/db'
+import { prisma } from '../config'
 
 // Initialize Sui client
 const rpcUrl = process.env.SUI_RPC_URL || getFullnodeUrl('mainnet')

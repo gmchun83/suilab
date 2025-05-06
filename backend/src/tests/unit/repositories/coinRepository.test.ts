@@ -11,7 +11,8 @@ jest.mock('../../../config', () => ({
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      count: jest.fn()
+      count: jest.fn(),
+      upsert: jest.fn()
     }
   }
 }));
@@ -256,6 +257,165 @@ describe('Coin Repository', () => {
       (prisma.coin.count as jest.Mock).mockRejectedValue(error);
 
       await expect(coinRepository.count()).rejects.toThrow(error);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('search', () => {
+    it('should search coins by name or symbol', async () => {
+      const mockCoins = [
+        { id: '1', name: 'TestCoin', symbol: 'TC' },
+        { id: '2', name: 'Another Test', symbol: 'AT' }
+      ];
+
+      (prisma.coin.findMany as jest.Mock).mockResolvedValue(mockCoins);
+
+      const result = await coinRepository.search('test');
+
+      expect(prisma.coin.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: 'test',
+                mode: 'insensitive',
+              },
+            },
+            {
+              symbol: {
+                contains: 'test',
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+        skip: 0,
+        take: 10,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      expect(result).toEqual(mockCoins);
+    });
+
+    it('should handle pagination in search', async () => {
+      const mockCoins = [
+        { id: '3', name: 'TestCoin3', symbol: 'TC3' }
+      ];
+
+      (prisma.coin.findMany as jest.Mock).mockResolvedValue(mockCoins);
+
+      const result = await coinRepository.search('test', 2, 1);
+
+      expect(prisma.coin.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: 'test',
+                mode: 'insensitive',
+              },
+            },
+            {
+              symbol: {
+                contains: 'test',
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+        skip: 1,
+        take: 1,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+      expect(result).toEqual(mockCoins);
+    });
+
+    it('should handle errors in search', async () => {
+      const error = new Error('Database error');
+      (prisma.coin.findMany as jest.Mock).mockRejectedValue(error);
+
+      await expect(coinRepository.search('test')).rejects.toThrow(error);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('findTrending', () => {
+    it('should return trending coins', async () => {
+      const mockCoins = [
+        { id: '1', name: 'TrendingCoin1', volume24h: '5000' },
+        { id: '2', name: 'TrendingCoin2', volume24h: '3000' }
+      ];
+
+      (prisma.coin.findMany as jest.Mock).mockResolvedValue(mockCoins);
+
+      const result = await coinRepository.findTrending(5);
+
+      expect(prisma.coin.findMany).toHaveBeenCalledWith({
+        take: 5,
+        orderBy: [
+          { volume24h: 'desc' },
+          { createdAt: 'desc' }
+        ]
+      });
+      expect(result).toEqual(mockCoins);
+    });
+
+    it('should handle errors in findTrending', async () => {
+      const error = new Error('Database error');
+      (prisma.coin.findMany as jest.Mock).mockRejectedValue(error);
+
+      await expect(coinRepository.findTrending(5)).rejects.toThrow(error);
+      expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('getLeaderboard', () => {
+    it('should return coin leaderboard', async () => {
+      const mockCoins = [
+        { id: '1', name: 'LeaderCoin1', marketCap: '10000' },
+        { id: '2', name: 'LeaderCoin2', marketCap: '8000' }
+      ];
+
+      (prisma.coin.findMany as jest.Mock).mockResolvedValue(mockCoins);
+
+      const result = await coinRepository.getLeaderboard('marketCap', 5);
+
+      expect(prisma.coin.findMany).toHaveBeenCalledWith({
+        take: 5,
+        orderBy: {
+          marketCap: 'desc'
+        }
+      });
+      expect(result).toEqual(mockCoins);
+    });
+
+    it('should handle different sort criteria', async () => {
+      const mockCoins = [
+        { id: '1', name: 'LeaderCoin1', holders: 500 },
+        { id: '2', name: 'LeaderCoin2', holders: 300 }
+      ];
+
+      (prisma.coin.findMany as jest.Mock).mockResolvedValue(mockCoins);
+
+      const result = await coinRepository.getLeaderboard('holders', 5);
+
+      expect(prisma.coin.findMany).toHaveBeenCalledWith({
+        take: 5,
+        orderBy: {
+          holders: 'desc'
+        }
+      });
+      expect(result).toEqual(mockCoins);
+    });
+
+    it('should handle errors in getLeaderboard', async () => {
+      const error = new Error('Database error');
+      (prisma.coin.findMany as jest.Mock).mockRejectedValue(error);
+
+      await expect(coinRepository.getLeaderboard('marketCap', 5)).rejects.toThrow(error);
       expect(logger.error).toHaveBeenCalled();
     });
   });

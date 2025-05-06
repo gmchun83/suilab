@@ -7,6 +7,16 @@ jest.mock('../utils/redisClient', () => {
     connect: jest.fn().mockResolvedValue(undefined),
     quit: jest.fn().mockResolvedValue(undefined),
     on: jest.fn(),
+    exists: jest.fn().mockResolvedValue(0),
+    expire: jest.fn().mockResolvedValue(1),
+    hGet: jest.fn().mockResolvedValue(null),
+    hSet: jest.fn().mockResolvedValue(1),
+    hGetAll: jest.fn().mockResolvedValue({}),
+    hDel: jest.fn().mockResolvedValue(1),
+    incr: jest.fn().mockResolvedValue(1),
+    decr: jest.fn().mockResolvedValue(0),
+    keys: jest.fn().mockResolvedValue([]),
+    flushAll: jest.fn().mockResolvedValue('OK'),
   };
 
   return {

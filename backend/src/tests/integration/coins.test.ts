@@ -220,6 +220,72 @@ describe('Coin API Endpoints', () => {
       });
     });
 
+    it('should handle missing required fields', async () => {
+      const mockCoinData = {
+        // Missing name and symbol
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001
+      };
+
+      const response = await request(app)
+        .post('/api/coins')
+        .send(mockCoinData);
+
+      expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(response.body.error).toBe(ERROR_MESSAGES.VALIDATION_ERROR);
+      expect(response.body.details).toBeDefined();
+    });
+
+    it('should handle invalid supply format', async () => {
+      const mockCoinData = {
+        name: 'NewCoin',
+        symbol: 'NC',
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: 'not-a-number', // Invalid supply
+        price: 0.001
+      };
+
+      const response = await request(app)
+        .post('/api/coins')
+        .send(mockCoinData);
+
+      expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(response.body.error).toBe(ERROR_MESSAGES.VALIDATION_ERROR);
+      expect(response.body.details).toBeDefined();
+    });
+
+    it('should handle negative price', async () => {
+      const mockCoinData = {
+        name: 'NewCoin',
+        symbol: 'NC',
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: -0.001 // Negative price
+      };
+
+      const response = await request(app)
+        .post('/api/coins')
+        .send(mockCoinData);
+
+      expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(response.body.error).toBe(ERROR_MESSAGES.VALIDATION_ERROR);
+      expect(response.body.details).toBeDefined();
+    });
+
+    it('should handle empty request body', async () => {
+      const response = await request(app)
+        .post('/api/coins')
+        .send({});
+
+      expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(response.body.error).toBe(ERROR_MESSAGES.VALIDATION_ERROR);
+      expect(response.body.details).toBeDefined();
+    });
+
     it('should handle other errors', async () => {
       const mockCoinData = {
         name: 'NewCoin',

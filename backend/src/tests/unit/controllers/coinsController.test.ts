@@ -86,9 +86,113 @@ describe('Coins Controller', () => {
       });
     });
 
-    it('should handle errors', async () => {
+    it('should handle invalid page parameter', async () => {
+      const mockCoins = [{ id: '1', name: 'TestCoin' }];
+      const mockTotal = 1;
+
+      mockRequest.query = { page: 'invalid', limit: '10' };
+
+      (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
+      (coinService.getTotalCoins as jest.Mock).mockResolvedValue(mockTotal);
+
+      await getCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getAllCoins).toHaveBeenCalledWith(1, 10); // Default to page 1
+      expect(responseJson).toHaveBeenCalledWith({
+        data: mockCoins,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: mockTotal
+        }
+      });
+    });
+
+    it('should handle negative page parameter', async () => {
+      const mockCoins = [{ id: '1', name: 'TestCoin' }];
+      const mockTotal = 1;
+
+      mockRequest.query = { page: '-5', limit: '10' };
+
+      (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
+      (coinService.getTotalCoins as jest.Mock).mockResolvedValue(mockTotal);
+
+      await getCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getAllCoins).toHaveBeenCalledWith(1, 10); // Default to page 1
+      expect(responseJson).toHaveBeenCalledWith({
+        data: mockCoins,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: mockTotal
+        }
+      });
+    });
+
+    it('should handle invalid limit parameter', async () => {
+      const mockCoins = [{ id: '1', name: 'TestCoin' }];
+      const mockTotal = 1;
+
+      mockRequest.query = { page: '1', limit: 'invalid' };
+
+      (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
+      (coinService.getTotalCoins as jest.Mock).mockResolvedValue(mockTotal);
+
+      await getCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getAllCoins).toHaveBeenCalledWith(1, 10); // Default to limit 10
+      expect(responseJson).toHaveBeenCalledWith({
+        data: mockCoins,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: mockTotal
+        }
+      });
+    });
+
+    it('should handle too large limit parameter', async () => {
+      const mockCoins = [{ id: '1', name: 'TestCoin' }];
+      const mockTotal = 1;
+
+      mockRequest.query = { page: '1', limit: '1000' };
+
+      (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
+      (coinService.getTotalCoins as jest.Mock).mockResolvedValue(mockTotal);
+
+      await getCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(coinService.getAllCoins).toHaveBeenCalledWith(1, 100); // Cap at 100
+      expect(responseJson).toHaveBeenCalledWith({
+        data: mockCoins,
+        pagination: {
+          page: 1,
+          limit: 100,
+          total: mockTotal
+        }
+      });
+    });
+
+    it('should handle errors from getAllCoins', async () => {
       const error = new Error('Test error');
       (coinService.getAllCoins as jest.Mock).mockRejectedValue(error);
+      (coinService.getTotalCoins as jest.Mock).mockResolvedValue(10);
+
+      await getCoins(mockRequest as Request, mockResponse as Response);
+
+      expect(responseStatus).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(responseJson).toHaveBeenCalledWith({
+        error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      });
+    });
+
+    it('should handle errors from getTotalCoins', async () => {
+      const mockCoins = [{ id: '1', name: 'TestCoin' }];
+      const error = new Error('Test error');
+
+      (coinService.getAllCoins as jest.Mock).mockResolvedValue(mockCoins);
+      (coinService.getTotalCoins as jest.Mock).mockRejectedValue(error);
 
       await getCoins(mockRequest as Request, mockResponse as Response);
 
