@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { transactionRoutes } from '../../api/routes';
+import transactionsRoutes from '../../api/routes/transactionsRoutes';
 import { transactionService } from '../../services';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../../constants';
 
@@ -18,7 +18,7 @@ jest.mock('../../services', () => ({
 // Create a test app
 const app = express();
 app.use(express.json());
-app.use('/api/transactions', transactionRoutes);
+app.use(transactionsRoutes);
 
 describe('Transaction API Endpoints', () => {
   beforeEach(() => {
@@ -31,7 +31,7 @@ describe('Transaction API Endpoints', () => {
         { id: '1', coinId: 'coin1', amount: '100' },
         { id: '2', coinId: 'coin1', amount: '200' }
       ];
-      
+
       (transactionService.getTransactionsByCoinId as jest.Mock).mockResolvedValue(mockTransactions);
       (transactionService.getTotalTransactionsByCoinId as jest.Mock).mockResolvedValue(2);
 
@@ -52,7 +52,7 @@ describe('Transaction API Endpoints', () => {
 
     it('should handle custom pagination parameters', async () => {
       const mockTransactions = [{ id: '3', coinId: 'coin1', amount: '300' }];
-      
+
       (transactionService.getTransactionsByCoinId as jest.Mock).mockResolvedValue(mockTransactions);
       (transactionService.getTotalTransactionsByCoinId as jest.Mock).mockResolvedValue(3);
 
@@ -96,7 +96,7 @@ describe('Transaction API Endpoints', () => {
   describe('GET /api/transactions/:id', () => {
     it('should return a transaction by ID', async () => {
       const mockTransaction = { id: '1', coinId: 'coin1', amount: '100' };
-      
+
       (transactionService.getTransactionById as jest.Mock).mockResolvedValue(mockTransaction);
 
       const response = await request(app).get('/api/transactions/1');
@@ -138,9 +138,9 @@ describe('Transaction API Endpoints', () => {
         walletAddress: '0x123',
         hash: '0xabc'
       };
-      
+
       const mockCreatedTransaction = { id: '1', ...mockTransactionData };
-      
+
       (transactionService.createTransaction as jest.Mock).mockResolvedValue(mockCreatedTransaction);
 
       const response = await request(app)
@@ -160,7 +160,7 @@ describe('Transaction API Endpoints', () => {
         walletAddress: '0x123',
         hash: '0xabc'
       };
-      
+
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.COIN_NOT_FOUND));
 
       const response = await request(app)
@@ -181,7 +181,7 @@ describe('Transaction API Endpoints', () => {
         walletAddress: '0x123',
         hash: '0xabc'
       };
-      
+
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error(ERROR_MESSAGES.TRANSACTION_VALIDATION_FAILED));
 
       const response = await request(app)
@@ -202,7 +202,7 @@ describe('Transaction API Endpoints', () => {
         walletAddress: '0x123',
         hash: '0xabc'
       };
-      
+
       (transactionService.createTransaction as jest.Mock).mockRejectedValue(new Error('Test error'));
 
       const response = await request(app)
@@ -222,7 +222,7 @@ describe('Transaction API Endpoints', () => {
         { id: '1', coinId: 'coin1', amount: '100', walletAddress: '0x123' },
         { id: '2', coinId: 'coin2', amount: '200', walletAddress: '0x123' }
       ];
-      
+
       (transactionService.getTransactionsByWalletAddress as jest.Mock).mockResolvedValue(mockTransactions);
 
       const response = await request(app).get('/api/transactions/wallet/0x123');
@@ -240,7 +240,7 @@ describe('Transaction API Endpoints', () => {
 
     it('should handle custom pagination parameters', async () => {
       const mockTransactions = [{ id: '3', coinId: 'coin3', amount: '300', walletAddress: '0x123' }];
-      
+
       (transactionService.getTransactionsByWalletAddress as jest.Mock).mockResolvedValue(mockTransactions);
 
       const response = await request(app).get('/api/transactions/wallet/0x123?page=2&limit=10');

@@ -1,4 +1,5 @@
-import { coinService } from '../../../services';
+// Import directly to avoid circular dependency
+import coinService from '../../../services/coinService';
 import { coinRepository } from '../../../db/repositories';
 import { redisClient } from '../../../utils/redisClient';
 import { logger } from '../../../utils/logger';
@@ -102,7 +103,18 @@ describe('Coin Service', () => {
 
   describe('createCoin', () => {
     it('should create a new coin', async () => {
-      const mockCoinData = { name: 'NewCoin', symbol: 'NC', objectId: 'obj123' };
+      const mockCoinData = {
+        name: 'NewCoin',
+        symbol: 'NC',
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
+      };
       const mockCreatedCoin = { id: '1', ...mockCoinData };
 
       (coinRepository.findByObjectId as jest.Mock).mockResolvedValue(null);
@@ -118,7 +130,18 @@ describe('Coin Service', () => {
     });
 
     it('should throw error if coin already exists', async () => {
-      const mockCoinData = { name: 'ExistingCoin', symbol: 'EC', objectId: 'obj123' };
+      const mockCoinData = {
+        name: 'ExistingCoin',
+        symbol: 'EC',
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
+      };
       const existingCoin = { id: '1', ...mockCoinData };
 
       (coinRepository.findByObjectId as jest.Mock).mockResolvedValue(existingCoin);
@@ -128,7 +151,18 @@ describe('Coin Service', () => {
     });
 
     it('should handle errors', async () => {
-      const mockCoinData = { name: 'NewCoin', symbol: 'NC', objectId: 'obj123' };
+      const mockCoinData = {
+        name: 'NewCoin',
+        symbol: 'NC',
+        objectId: 'obj123',
+        creatorAddress: '0x123',
+        supply: '1000000',
+        price: 0.001,
+        marketCap: '1000',
+        volume24h: '100',
+        priceChange24h: '5',
+        holders: 10
+      };
       const error = new Error('Test error');
 
       (coinRepository.findByObjectId as jest.Mock).mockResolvedValue(null);
@@ -141,9 +175,23 @@ describe('Coin Service', () => {
 
   describe('updateCoin', () => {
     it('should update an existing coin', async () => {
-      const mockCoinData = { name: 'UpdatedCoin' };
+      const mockCoinData = {
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
+      };
       const existingCoin = { id: '1', name: 'OldCoin' };
-      const updatedCoin = { id: '1', name: 'UpdatedCoin' };
+      const updatedCoin = {
+        id: '1',
+        name: 'OldCoin',
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
+      };
 
       (coinRepository.findById as jest.Mock).mockResolvedValue(existingCoin);
       (coinRepository.update as jest.Mock).mockResolvedValue(updatedCoin);
@@ -159,7 +207,13 @@ describe('Coin Service', () => {
     });
 
     it('should throw error if coin not found', async () => {
-      const mockCoinData = { name: 'UpdatedCoin' };
+      const mockCoinData = {
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
+      };
 
       (coinRepository.findById as jest.Mock).mockResolvedValue(null);
 
@@ -168,7 +222,13 @@ describe('Coin Service', () => {
     });
 
     it('should handle errors', async () => {
-      const mockCoinData = { name: 'UpdatedCoin' };
+      const mockCoinData = {
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200',
+        priceChange24h: '10',
+        holders: 20
+      };
       const existingCoin = { id: '1', name: 'OldCoin' };
       const error = new Error('Test error');
 

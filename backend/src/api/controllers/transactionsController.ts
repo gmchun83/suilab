@@ -25,7 +25,7 @@ export const getTransactionsByCoinId = async (req: Request, res: Response) => {
         },
       });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.COIN_NOT_FOUND
         });
@@ -51,7 +51,7 @@ export const getTransactionById = async (req: Request, res: Response) => {
       const transaction = await transactionService.getTransactionById(id);
       res.json({ data: transaction });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.TRANSACTION_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.TRANSACTION_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.TRANSACTION_NOT_FOUND
         });
@@ -75,12 +75,12 @@ export const createTransaction = async (req: Request, res: Response) => {
       const transaction = await transactionService.createTransaction(req.body);
       res.status(HTTP_STATUS.CREATED).json({ data: transaction });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.COIN_NOT_FOUND
         });
       }
-      if (error.message === ERROR_MESSAGES.TRANSACTION_VALIDATION_FAILED) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.TRANSACTION_VALIDATION_FAILED) {
         return res.status(HTTP_STATUS.CONFLICT).json({
           error: ERROR_MESSAGES.TRANSACTION_VALIDATION_FAILED
         });

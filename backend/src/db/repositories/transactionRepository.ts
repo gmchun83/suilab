@@ -12,7 +12,7 @@ export class TransactionRepository {
   async findByCoinId(coinId: string, page = 1, limit = 10): Promise<Transaction[]> {
     try {
       const skip = (page - 1) * limit;
-      
+
       const transactions = await prisma.transaction.findMany({
         where: { coinId },
         skip,
@@ -21,14 +21,14 @@ export class TransactionRepository {
           timestamp: 'desc',
         },
       });
-      
-      return transactions;
+
+      return transactions as unknown as Transaction[];
     } catch (error) {
       logger.error(`Error finding transactions for coin ${coinId}:`, error);
       throw error;
     }
   }
-  
+
   /**
    * Find a transaction by ID
    */
@@ -37,14 +37,14 @@ export class TransactionRepository {
       const transaction = await prisma.transaction.findUnique({
         where: { id },
       });
-      
-      return transaction;
+
+      return transaction as unknown as Transaction | null;
     } catch (error) {
       logger.error(`Error finding transaction with ID ${id}:`, error);
       throw error;
     }
   }
-  
+
   /**
    * Find a transaction by transaction hash
    */
@@ -53,37 +53,43 @@ export class TransactionRepository {
       const transaction = await prisma.transaction.findUnique({
         where: { txId },
       });
-      
-      return transaction;
+
+      return transaction as unknown as Transaction | null;
     } catch (error) {
       logger.error(`Error finding transaction with txId ${txId}:`, error);
       throw error;
     }
   }
-  
+
   /**
    * Create a new transaction
    */
   async create(data: TransactionCreateInput): Promise<Transaction> {
     try {
+      // Convert string amount to bigint for Prisma
+      const prismaData = {
+        ...data,
+        amount: BigInt(data.amount)
+      };
+
       const transaction = await prisma.transaction.create({
-        data,
+        data: prismaData as any,
       });
-      
-      return transaction;
+
+      return transaction as unknown as Transaction;
     } catch (error) {
       logger.error('Error creating transaction:', error);
       throw error;
     }
   }
-  
+
   /**
    * Find transactions by wallet address
    */
   async findByWalletAddress(walletAddress: string, page = 1, limit = 10): Promise<Transaction[]> {
     try {
       const skip = (page - 1) * limit;
-      
+
       const transactions = await prisma.transaction.findMany({
         where: { walletAddress },
         skip,
@@ -92,14 +98,14 @@ export class TransactionRepository {
           timestamp: 'desc',
         },
       });
-      
-      return transactions;
+
+      return transactions as unknown as Transaction[];
     } catch (error) {
       logger.error(`Error finding transactions for wallet ${walletAddress}:`, error);
       throw error;
     }
   }
-  
+
   /**
    * Count total number of transactions for a coin
    */
@@ -108,7 +114,7 @@ export class TransactionRepository {
       const count = await prisma.transaction.count({
         where: { coinId },
       });
-      
+
       return count;
     } catch (error) {
       logger.error(`Error counting transactions for coin ${coinId}:`, error);

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getCoins, getCoinById, getTrendingCoins, createCoin, updateCoin, searchCoins } from '../../../api/controllers/coinsController';
+import { getCoins, getCoinById, getTrendingCoins, createCoin, updateCoin, searchCoins, getCoinPriceHistory, getLeaderboard } from '../../../api/controllers/coinsController';
 import { coinService } from '../../../services';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../../../constants';
 

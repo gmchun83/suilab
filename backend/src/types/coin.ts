@@ -60,6 +60,6 @@ export interface CoinWithPriceHistory extends Coin {
  * Price point for historical data
  */
 export interface PricePoint {
-  timestamp: Date;
-  price: number;
+  timestamp: number; // Timestamp in milliseconds
+  price: string;
 }

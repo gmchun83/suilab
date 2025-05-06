@@ -7,7 +7,7 @@ import {
 } from '../controllers/transactionsController';
 import {
   validateCreateTransaction,
-  validatePagination
+  validateTransactionPagination as validatePagination
 } from '../validators';
 import { rateLimitMiddleware, authMiddleware } from '../middleware';
 

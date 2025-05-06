@@ -1,9 +1,11 @@
-import { transactionService } from '../../../services';
+// Import directly to avoid circular dependency
+import transactionService from '../../../services/transactionService';
 import { transactionRepository, coinRepository } from '../../../db/repositories';
 import { redisClient } from '../../../utils/redisClient';
 import { logger } from '../../../utils/logger';
 import { ERROR_MESSAGES } from '../../../constants';
 import { mockTransactionRepository, mockCoinRepository } from '../../mocks/repositories';
+import { TransactionType } from '../../../types/transaction';
 
 // Mock the repositories
 jest.mock('../../../db/repositories', () => ({
@@ -136,9 +138,18 @@ describe('Transaction Service', () => {
 
   describe('createTransaction', () => {
     it('should create a new transaction', async () => {
-      const mockTransactionData = { coinId: 'coin1', amount: '100', type: 'buy' };
+      const mockTransactionData = {
+        txId: '0xabc',
+        coinId: 'coin1',
+        type: TransactionType.BUY,
+        amount: '100',
+        price: 0.001,
+        value: '0.1',
+        walletAddress: '0x123',
+        timestamp: new Date()
+      };
       const mockCreatedTransaction = { id: '1', ...mockTransactionData };
-      
+
       (coinRepository.findById as jest.Mock).mockResolvedValue({ id: 'coin1', name: 'TestCoin' });
       (transactionRepository.create as jest.Mock).mockResolvedValue(mockCreatedTransaction);
 
@@ -151,8 +162,17 @@ describe('Transaction Service', () => {
     });
 
     it('should throw error if coin not found', async () => {
-      const mockTransactionData = { coinId: 'nonexistent', amount: '100', type: 'buy' };
-      
+      const mockTransactionData = {
+        txId: '0xabc',
+        coinId: 'nonexistent',
+        type: TransactionType.BUY,
+        amount: '100',
+        price: 0.001,
+        value: '0.1',
+        walletAddress: '0x123',
+        timestamp: new Date()
+      };
+
       (coinRepository.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(transactionService.createTransaction(mockTransactionData))
@@ -160,8 +180,17 @@ describe('Transaction Service', () => {
     });
 
     it('should throw error if validation fails', async () => {
-      const mockTransactionData = { coinId: 'coin1', amount: '-100', type: 'buy' };
-      
+      const mockTransactionData = {
+        txId: '0xabc',
+        coinId: 'coin1',
+        type: TransactionType.BUY,
+        amount: '-100',
+        price: 0.001,
+        value: '-0.1',
+        walletAddress: '0x123',
+        timestamp: new Date()
+      };
+
       (coinRepository.findById as jest.Mock).mockResolvedValue({ id: 'coin1', name: 'TestCoin' });
       (transactionRepository.create as jest.Mock).mockImplementation(() => {
         throw new Error('Validation error');
@@ -172,9 +201,18 @@ describe('Transaction Service', () => {
     });
 
     it('should handle errors', async () => {
-      const mockTransactionData = { coinId: 'coin1', amount: '100', type: 'buy' };
+      const mockTransactionData = {
+        txId: '0xabc',
+        coinId: 'coin1',
+        type: TransactionType.BUY,
+        amount: '100',
+        price: 0.001,
+        value: '0.1',
+        walletAddress: '0x123',
+        timestamp: new Date()
+      };
       const error = new Error('Test error');
-      
+
       (coinRepository.findById as jest.Mock).mockRejectedValue(error);
 
       await expect(transactionService.createTransaction(mockTransactionData))

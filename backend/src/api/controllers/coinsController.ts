@@ -41,7 +41,7 @@ export const getCoinById = async (req: Request, res: Response) => {
       const coin = await coinService.getCoinById(id);
       res.json({ data: coin });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.COIN_NOT_FOUND
         });
@@ -83,7 +83,7 @@ export const createCoin = async (req: Request, res: Response) => {
       const coin = await coinService.createCoin(req.body);
       res.status(HTTP_STATUS.CREATED).json({ data: coin });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_ALREADY_EXISTS) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_ALREADY_EXISTS) {
         return res.status(HTTP_STATUS.CONFLICT).json({
           error: ERROR_MESSAGES.COIN_ALREADY_EXISTS
         });
@@ -109,7 +109,7 @@ export const updateCoin = async (req: Request, res: Response) => {
       const coin = await coinService.updateCoin(id, req.body);
       res.json({ data: coin });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.COIN_NOT_FOUND
         });
@@ -169,7 +169,7 @@ export const getCoinPriceHistory = async (req: Request, res: Response) => {
       const priceHistory = await coinService.getCoinPriceHistory(id, period);
       res.json({ data: priceHistory });
     } catch (error) {
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({
           error: ERROR_MESSAGES.COIN_NOT_FOUND
         });

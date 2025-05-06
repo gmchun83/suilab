@@ -27,7 +27,7 @@ export class CoinService {
       const coins = await coinRepository.findAll(page, limit);
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(coins), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(coins), { EX: this.CACHE_TTL });
 
       return coins;
     } catch (error) {
@@ -53,7 +53,7 @@ export class CoinService {
       const coins = await coinRepository.findTrending(limit);
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(coins), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(coins), { EX: this.CACHE_TTL });
 
       return coins;
     } catch (error) {
@@ -83,12 +83,12 @@ export class CoinService {
       }
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(coin), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(coin), { EX: this.CACHE_TTL });
 
       return coin;
     } catch (error) {
       logger.error(`Error getting coin with ID ${id}:`, error);
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         throw error;
       }
       throw new Error(ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
@@ -116,7 +116,7 @@ export class CoinService {
       return coin;
     } catch (error) {
       logger.error('Error creating coin:', error);
-      if (error.message === ERROR_MESSAGES.COIN_ALREADY_EXISTS) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_ALREADY_EXISTS) {
         throw error;
       }
       throw new Error(ERROR_MESSAGES.COIN_CREATION_FAILED);
@@ -145,7 +145,7 @@ export class CoinService {
       return updatedCoin;
     } catch (error) {
       logger.error(`Error updating coin with ID ${id}:`, error);
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         throw error;
       }
       throw new Error(ERROR_MESSAGES.COIN_UPDATE_FAILED);
@@ -169,7 +169,7 @@ export class CoinService {
       const coins = await coinRepository.search(query, page, limit);
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(coins), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(coins), { EX: this.CACHE_TTL });
 
       return coins;
     } catch (error) {
@@ -195,7 +195,7 @@ export class CoinService {
       const count = await coinRepository.count();
 
       // Cache the result
-      await redisClient.set(cacheKey, count.toString(), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, count.toString(), { EX: this.CACHE_TTL });
 
       return count;
     } catch (error) {
@@ -227,12 +227,12 @@ export class CoinService {
       const priceHistory = await coinRepository.getPriceHistory(id, period);
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(priceHistory), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(priceHistory), { EX: this.CACHE_TTL });
 
       return priceHistory;
     } catch (error) {
       logger.error(`Error getting price history for coin with ID ${id}:`, error);
-      if (error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
+      if (error instanceof Error && error.message === ERROR_MESSAGES.COIN_NOT_FOUND) {
         throw error;
       }
       throw new Error(ERROR_MESSAGES.INTERNAL_SERVER_ERROR);
@@ -256,7 +256,7 @@ export class CoinService {
       const leaderboard = await coinRepository.getLeaderboard(limit, sortBy);
 
       // Cache the result
-      await redisClient.set(cacheKey, JSON.stringify(leaderboard), 'EX', this.CACHE_TTL);
+      await redisClient.set(cacheKey, JSON.stringify(leaderboard), { EX: this.CACHE_TTL });
 
       return leaderboard;
     } catch (error) {

@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { coinRoutes } from '../../api/routes';
+import coinsRoutes from '../../api/routes/coinsRoutes';
 import { coinService } from '../../services';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../../constants';
 
@@ -22,7 +22,7 @@ jest.mock('../../services', () => ({
 // Create a test app
 const app = express();
 app.use(express.json());
-app.use('/api/coins', coinRoutes);
+app.use(coinsRoutes);
 
 describe('Coin API Endpoints', () => {
   beforeEach(() => {

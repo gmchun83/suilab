@@ -1,5 +1,6 @@
 import { CoinRepository } from '../../../db/repositories/coinRepository';
 import { prisma } from '../../../config';
+import { logger } from '../../../utils/logger';
 
 // Mock Prisma
 jest.mock('../../../config', () => ({
@@ -12,6 +13,16 @@ jest.mock('../../../config', () => ({
       update: jest.fn(),
       count: jest.fn()
     }
+  }
+}));
+
+// Mock logger
+jest.mock('../../../utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn()
   }
 }));
 
@@ -157,7 +168,10 @@ describe('Coin Repository', () => {
       const result = await coinRepository.create(mockCoinData);
 
       expect(prisma.coin.create).toHaveBeenCalledWith({
-        data: mockCoinData
+        data: {
+          ...mockCoinData,
+          supply: BigInt(mockCoinData.supply)
+        }
       });
       expect(result).toEqual(mockCreatedCoin);
     });
@@ -187,16 +201,19 @@ describe('Coin Repository', () => {
   describe('update', () => {
     it('should update a coin', async () => {
       const mockCoinData = {
-        name: 'UpdatedCoin',
-        price: 0.002
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200'
       };
 
       const mockUpdatedCoin = {
         id: '1',
         objectId: 'obj123',
-        name: 'UpdatedCoin',
+        name: 'TestCoin',
         symbol: 'NC',
-        price: 0.002
+        price: 0.002,
+        marketCap: '2000',
+        volume24h: '200'
       };
 
       (prisma.coin.update as jest.Mock).mockResolvedValue(mockUpdatedCoin);
@@ -212,7 +229,8 @@ describe('Coin Repository', () => {
 
     it('should handle errors', async () => {
       const mockCoinData = {
-        name: 'UpdatedCoin'
+        price: 0.002,
+        marketCap: '2000'
       };
 
       const error = new Error('Database error');

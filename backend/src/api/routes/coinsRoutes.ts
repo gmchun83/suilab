@@ -12,7 +12,7 @@ import {
 import {
   validateCreateCoin,
   validateUpdateCoin,
-  validatePagination,
+  validateCoinPagination as validatePagination,
   validateSearch
 } from '../validators';
 import { rateLimitMiddleware, authMiddleware } from '../middleware';
