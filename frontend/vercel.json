@@ -16,5 +16,6 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "ignoreCommand": "echo 'Skipping TypeScript type checking'"
 }

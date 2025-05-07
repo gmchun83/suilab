@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { fetchCoins, fetchCoinDetails } from '../store/slices/coinsSlice';
+import { fetchAllCoins as fetchCoins, fetchCoinDetails } from '../store/slices/coinsSlice';
 
 export const useCoins = () => {
   const dispatch = useDispatch();
