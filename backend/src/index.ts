@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import app from './app';
+import { disconnectDatabase } from './config/database';
 
 // Load environment variables
 dotenv.config();
@@ -15,20 +16,24 @@ const server = app.listen(port, () => {
 });
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
+const shutdown = async (signal: NodeJS.Signals) => {
+  logger.info(`${signal} signal received: closing HTTP server`);
+
+  server.close(async () => {
     logger.info('HTTP server closed');
+
+    await disconnectDatabase();
+
     process.exit(0);
   });
+};
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
+  void shutdown('SIGINT');
 });
 
 export default server;
