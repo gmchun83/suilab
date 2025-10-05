@@ -10,6 +10,6 @@ router.get('/api/dex/pool/:coinId', dexController.getPoolInfo);
 router.get('/api/dex/price-history/:coinId', dexController.getPriceHistory);
 router.get('/api/dex/market-cap/:coinId', dexController.getMarketCap);
 router.post('/api/dex/price-impact/:coinId', dexController.calculatePriceImpact);
-router.post('/api/dex/create-pool/:coinId', authMiddleware.authenticate, dexController.createDexPool);
+router.post('/api/dex/create-pool/:coinId', authMiddleware, dexController.createDexPool);
 
 export default router;
