@@ -1,6 +1,6 @@
 import express from 'express';
-import { dexController } from '../controllers';
-import { authMiddleware } from '../middleware';
+import dexController from '../controllers/dexController';
+import authMiddleware from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -10,6 +10,10 @@ router.get('/api/dex/pool/:coinId', dexController.getPoolInfo);
 router.get('/api/dex/price-history/:coinId', dexController.getPriceHistory);
 router.get('/api/dex/market-cap/:coinId', dexController.getMarketCap);
 router.post('/api/dex/price-impact/:coinId', dexController.calculatePriceImpact);
-router.post('/api/dex/create-pool/:coinId', authMiddleware, dexController.createDexPool);
+router.post(
+  '/api/dex/create-pool/:coinId',
+  authMiddleware,
+  (req, res) => dexController.createDexPool(req, res)
+);
 
 export default router;
