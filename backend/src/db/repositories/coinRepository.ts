@@ -109,9 +109,45 @@ export class CoinRepository {
    */
   async update(id: string, data: CoinUpdateInput): Promise<Coin> {
     try {
+      const prismaData: Record<string, unknown> = {};
+
+      if (typeof data.price !== 'undefined') {
+        prismaData.price = data.price;
+      }
+
+      if (typeof data.marketCap !== 'undefined') {
+        prismaData.marketCap = data.marketCap;
+      }
+
+      if (typeof data.volume24h !== 'undefined') {
+        const volume = typeof data.volume24h === 'string'
+          ? Number.parseFloat(data.volume24h)
+          : data.volume24h;
+        if (typeof volume === 'number' && !Number.isNaN(volume)) {
+          prismaData.volume24h = volume;
+        }
+      }
+
+      if (typeof data.priceChange24h !== 'undefined') {
+        const priceChange = typeof data.priceChange24h === 'string'
+          ? Number.parseFloat(data.priceChange24h)
+          : data.priceChange24h;
+        if (typeof priceChange === 'number' && !Number.isNaN(priceChange)) {
+          prismaData.priceChange24h = priceChange;
+        }
+      }
+
+      if (typeof data.holders !== 'undefined') {
+        prismaData.holders = data.holders;
+      }
+
+      if (typeof data.imageUrl !== 'undefined') {
+        prismaData.imageUrl = data.imageUrl;
+      }
+
       const coin = await prisma.coin.update({
         where: { id },
-        data,
+        data: prismaData as any,
       });
 
       return coin as unknown as Coin;

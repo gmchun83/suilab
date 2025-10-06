@@ -29,7 +29,7 @@ class SuiListener {
     
     try {
       // Get the latest checkpoint to start from
-      const latestCheckpoint = await this.suiClient.getLatestCheckpointSequenceNumber()
+      const latestCheckpoint = BigInt(await this.suiClient.getLatestCheckpointSequenceNumber())
       this.lastProcessedCheckpoint = latestCheckpoint
       
       logger.info(`Starting from checkpoint: ${this.lastProcessedCheckpoint}`)
@@ -63,20 +63,20 @@ class SuiListener {
    * Poll for new events
    */
   private async pollEvents() {
-    if (!this.lastProcessedCheckpoint) {
+    if (this.lastProcessedCheckpoint === null) {
       logger.error('No last processed checkpoint')
       return
     }
     
     try {
       // Get the latest checkpoint
-      const latestCheckpoint = await this.suiClient.getLatestCheckpointSequenceNumber()
-      
+      const latestCheckpoint = BigInt(await this.suiClient.getLatestCheckpointSequenceNumber())
+
       // If there are no new checkpoints, skip
       if (latestCheckpoint <= this.lastProcessedCheckpoint) {
         return
       }
-      
+
       logger.info(`Processing checkpoints from ${this.lastProcessedCheckpoint + 1n} to ${latestCheckpoint}`)
       
       // Query events for our package

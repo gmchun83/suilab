@@ -19,6 +19,9 @@ export const ERROR_MESSAGES = {
   COIN_ALREADY_EXISTS: 'Coin already exists',
   COIN_UPDATE_FAILED: 'Failed to update coin',
   TRANSACTION_NOT_FOUND: 'Transaction not found',
+  TRANSACTION_VALIDATION_FAILED: 'Transaction validation failed',
+  TRANSACTION_CREATION_FAILED: 'Failed to create transaction',
   UNAUTHORIZED: 'Unauthorized',
-  FORBIDDEN: 'Forbidden'
+  FORBIDDEN: 'Forbidden',
+  NOT_FOUND: 'Resource not found'
 };

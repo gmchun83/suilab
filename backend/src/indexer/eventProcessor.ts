@@ -225,7 +225,7 @@ class EventProcessor {
       const newSupply = BigInt(coin.supply) - BigInt(amount)
       await prisma.coin.update({
         where: { id: coin.id },
-        data: { supply: newSupply.toString() }
+        data: { supply: newSupply }
       })
 
       // Send notification

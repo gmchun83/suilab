@@ -1,5 +1,6 @@
 import { Server } from 'http'
 import { Server as SocketServer } from 'socket.io'
+import type { Socket } from 'socket.io'
 import { logger } from '../utils/logger'
 
 class NotificationService {
@@ -16,7 +17,7 @@ class NotificationService {
       },
     })
 
-    this.io.on('connection', (socket) => {
+    this.io.on('connection', (socket: Socket) => {
       logger.info(`Client connected: ${socket.id}`)
 
       // Handle subscription to coin updates
