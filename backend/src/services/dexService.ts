@@ -1,7 +1,6 @@
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { bcs } from '@mysten/sui.js/bcs'
-import axios from 'axios'
 import { logger } from '../utils/logger'
 import { prisma } from '../config'
 

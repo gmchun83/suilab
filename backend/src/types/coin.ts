@@ -43,8 +43,8 @@ export interface CoinCreateInput {
 export interface CoinUpdateInput {
   price?: number;
   marketCap?: string;
-  volume24h?: string;
-  priceChange24h?: string;
+  volume24h?: string | number;
+  priceChange24h?: string | number;
   holders?: number;
   imageUrl?: string;
 }

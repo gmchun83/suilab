@@ -253,7 +253,7 @@ export class CoinService {
       }
 
       // Get leaderboard from repository
-      const leaderboard = await coinRepository.getLeaderboard(limit, sortBy);
+      const leaderboard = await coinRepository.getLeaderboard(sortBy, limit);
 
       // Cache the result
       await redisClient.set(cacheKey, JSON.stringify(leaderboard), { EX: this.CACHE_TTL });
