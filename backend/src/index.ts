@@ -1,17 +1,18 @@
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
 import app from './app';
+import { SERVER_CONFIG } from './config/server';
 import { disconnectDatabase } from './config/database';
 
 // Load environment variables
 dotenv.config();
 
-// Define port
-const port = process.env.PORT || 3000;
+// Define host and port
+const { host, port } = SERVER_CONFIG;
 
 // Start server
-const server = app.listen(port, () => {
-  logger.info(`Server running on port ${port}`);
+const server = app.listen(port, host, () => {
+  logger.info(`Server running on ${host}:${port}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
