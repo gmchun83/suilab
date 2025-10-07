@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import { logger } from './utils/logger';
 import app from './app';
 import { SERVER_CONFIG } from './config/server';
@@ -8,13 +9,46 @@ import { disconnectDatabase } from './config/database';
 dotenv.config();
 
 // Define host and port
-const { host, port } = SERVER_CONFIG;
+const { host, port, portFallbackAttempts } = SERVER_CONFIG;
 
-// Start server
-const server = app.listen(port, host, () => {
-  logger.info(`Server running on ${host}:${port}`);
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+const server = createServer(app);
+
+let currentPort = port;
+let attempts = 0;
+
+const listen = () => {
+  server.listen(currentPort, host, () => {
+    if (currentPort !== port) {
+      logger.warn(
+        `Configured port ${port} is in use. Server running on fallback port ${currentPort}`
+      );
+    } else {
+      logger.info(`Server running on ${host}:${currentPort}`);
+    }
+
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+};
+
+server.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EADDRINUSE' && attempts < portFallbackAttempts) {
+    const previousPort = currentPort;
+    attempts += 1;
+    currentPort += 1;
+
+    logger.warn(
+      `Port ${previousPort} is already in use. Attempting to start server on port ${currentPort} (retry ${attempts} of ${portFallbackAttempts}).`
+    );
+
+    setTimeout(listen, 100);
+    return;
+  }
+
+  logger.error('Failed to start server', { error: error.message });
+  process.exit(1);
 });
+
+listen();
 
 // Handle graceful shutdown
 const shutdown = async (signal: NodeJS.Signals) => {

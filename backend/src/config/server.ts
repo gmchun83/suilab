@@ -1,16 +1,21 @@
 // Server configuration
-const parsePort = (port?: string): number => {
-  if (!port) {
-    return 3000;
+const parseNumber = (value: string | undefined, defaultValue: number): number => {
+  if (!value) {
+    return defaultValue;
   }
 
-  const parsedPort = Number(port);
-  return Number.isNaN(parsedPort) ? 3000 : parsedPort;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? defaultValue : parsed;
+};
+
+const parsePort = (port?: string): number => {
+  return parseNumber(port, 3000);
 };
 
 export const SERVER_CONFIG = {
   host: process.env.HOST || '0.0.0.0',
   port: parsePort(process.env.PORT),
+  portFallbackAttempts: parseNumber(process.env.PORT_FALLBACK_ATTEMPTS, 5),
   env: process.env.NODE_ENV || 'development',
   corsOptions: {
     origin: process.env.CORS_ORIGIN || '*',
