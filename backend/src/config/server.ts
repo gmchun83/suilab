@@ -1,6 +1,16 @@
 // Server configuration
+const parsePort = (port?: string): number => {
+  if (!port) {
+    return 3000;
+  }
+
+  const parsedPort = Number(port);
+  return Number.isNaN(parsedPort) ? 3000 : parsedPort;
+};
+
 export const SERVER_CONFIG = {
-  port: process.env.PORT || 3000,
+  host: process.env.HOST || '0.0.0.0',
+  port: parsePort(process.env.PORT),
   env: process.env.NODE_ENV || 'development',
   corsOptions: {
     origin: process.env.CORS_ORIGIN || '*',
