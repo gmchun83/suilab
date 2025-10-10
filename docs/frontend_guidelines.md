@@ -281,7 +281,7 @@ const WalletButton = () => {
 ### 8.2 Blockchain Interactions
 - Use Sui JavaScript SDK for transactions:
 ```tsx
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
 
 const client = new SuiClient({ url: getFullnodeUrl('mainnet') });
 

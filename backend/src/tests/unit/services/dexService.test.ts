@@ -1,17 +1,17 @@
 import dexService from '../../../services/dexService';
-import { SuiClient } from '@mysten/sui.js/client';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient } from '@mysten/sui/client';
+import { TransactionBlock } from '@mysten/sui/transactions';
 import axios from 'axios';
 import logger from '../../../utils/logger';
 import { prisma } from '../../../config';
 
 // Mock dependencies
-jest.mock('@mysten/sui.js/client', () => ({
+jest.mock('@mysten/sui/client', () => ({
   SuiClient: jest.fn(),
   getFullnodeUrl: jest.fn().mockReturnValue('https://fullnode.testnet.sui.io:443')
 }));
 
-jest.mock('@mysten/sui.js/transactions', () => ({
+jest.mock('@mysten/sui/transactions', () => ({
   TransactionBlock: jest.fn().mockImplementation(() => ({
     moveCall: jest.fn().mockReturnThis(),
     setSender: jest.fn().mockReturnThis()
