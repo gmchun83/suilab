@@ -16,7 +16,7 @@
     "test:e2e": "cypress run"
   },
   "dependencies": {
-    "@mysten/sui": "^0.54.1",
+    "@mysten/sui": "^1.40.0",
     "@mysten/wallet-adapter-wallet-standard": "^0.6.0",
     "@mysten/wallet-standard": "^0.13.0",
     "@reduxjs/toolkit": "^1.9.5",
