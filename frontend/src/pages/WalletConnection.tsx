@@ -1,12 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
 import useWallet from '../hooks/useWallet'
 import { formatSUI } from '../utils/formatting'
+import {
+  getStoredWalletPreference,
+  getWalletAdapter,
+  getWalletAvailability,
+  type WalletId
+} from '../utils/walletAdapters'
 
 interface WalletOption {
-  id: string
+  id: WalletId
   name: string
   icon: string
   description: string
@@ -16,18 +22,28 @@ interface WalletOption {
 const WalletConnection: React.FC = () => {
   const navigate = useNavigate()
   const { connected, address, balance, loading, error, connect, disconnect } = useWallet()
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null)
-  const [walletDetected, setWalletDetected] = useState<boolean>(false)
+  const [selectedWallet, setSelectedWallet] = useState<WalletId | null>(null)
+  const [walletAvailability, setWalletAvailability] = useState(() => getWalletAvailability())
+
+  const walletDetected = useMemo(
+    () => Object.values(walletAvailability).some(Boolean),
+    [walletAvailability]
+  )
 
   // Check if wallet is available in the browser
   useEffect(() => {
     const checkWalletAvailability = () => {
-      const hasSuiWallet = !!window.suiWallet
-      setWalletDetected(hasSuiWallet)
+      const availability = getWalletAvailability()
+      setWalletAvailability(availability)
 
-      // If Sui wallet is detected, preselect it
-      if (hasSuiWallet) {
-        setSelectedWallet('sui-wallet')
+      const storedPreference = getStoredWalletPreference()
+      const { id } = getWalletAdapter(storedPreference)
+
+      if (id) {
+        setSelectedWallet(id)
+      } else {
+        const firstAvailable = (Object.entries(availability).find(([, available]) => available) ?? [])[0] as WalletId | undefined
+        setSelectedWallet(firstAvailable ?? null)
       }
     }
 
@@ -46,38 +62,38 @@ const WalletConnection: React.FC = () => {
   }, [connected, address, navigate])
 
   // Wallet options
-  const walletOptions: WalletOption[] = [
+  const walletOptions: WalletOption[] = useMemo(() => ([
     {
       id: 'sui-wallet',
       name: 'Sui Wallet',
       icon: 'https://assets.website-files.com/61a9a8412ca7053e3ff6f2ef/6434d419cfb6b4a058d4cb2c_sui-favicon.svg',
       description: 'The official wallet for the Sui blockchain',
-      available: walletDetected
+      available: walletAvailability['sui-wallet']
     },
     {
       id: 'ethos-wallet',
       name: 'Ethos Wallet',
       icon: 'https://ethoswallet.xyz/assets/images/ethos-logo.svg',
       description: 'A user-friendly wallet for Sui',
-      available: false
+      available: walletAvailability['ethos-wallet']
     },
     {
       id: 'suiet-wallet',
       name: 'Suiet Wallet',
       icon: 'https://suiet.app/favicon.ico',
       description: 'A comprehensive wallet for Sui ecosystem',
-      available: false
+      available: walletAvailability['suiet-wallet']
     },
     {
       id: 'martian-wallet',
       name: 'Martian Wallet',
       icon: 'https://martianwallet.xyz/assets/images/martian.png',
       description: 'Multi-chain wallet with Sui support',
-      available: false
+      available: walletAvailability['martian-wallet']
     }
-  ]
+  ]), [walletAvailability])
 
-  const handleSelectWallet = (walletId: string) => {
+  const handleSelectWallet = (walletId: WalletId) => {
     setSelectedWallet(walletId)
   }
 
@@ -87,7 +103,7 @@ const WalletConnection: React.FC = () => {
     }
 
     try {
-      await connect()
+      await connect(selectedWallet)
     } catch (err) {
       console.error('Connection error:', err)
     }
@@ -165,9 +181,9 @@ const WalletConnection: React.FC = () => {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-yellow-800">No Sui Wallet Detected</h3>
+                      <h3 className="text-sm font-medium text-yellow-800">No Compatible Wallet Detected</h3>
                       <div className="mt-2 text-sm text-yellow-700">
-                        <p>You need to install a Sui wallet to use PumpSui. We recommend the official Sui Wallet.</p>
+                        <p>You need to install a Sui-compatible wallet to use PumpSui. We recommend the official Sui Wallet.</p>
                         <a
                           href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
                           target="_blank"
@@ -200,13 +216,9 @@ const WalletConnection: React.FC = () => {
                       <h3 className="font-medium">{wallet.name}</h3>
                       <p className="text-sm text-gray-500">{wallet.description}</p>
                     </div>
-                    {!wallet.available && wallet.id === 'sui-wallet' ? (
-                      <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
-                        Not Installed
-                      </span>
-                    ) : !wallet.available ? (
+                    {!wallet.available ? (
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        Coming Soon
+                        {wallet.id === 'sui-wallet' ? 'Not Installed' : 'Unavailable'}
                       </span>
                     ) : (
                       <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">

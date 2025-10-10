@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Button from './common/Button'
 import useWallet from '../hooks/useWallet'
 import { formatSUI } from '../utils/formatting'
+import { getWalletAdapter } from '../utils/walletAdapters'
 
 const WalletButton: React.FC = () => {
   const navigate = useNavigate()
@@ -10,7 +11,9 @@ const WalletButton: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   const handleConnect = async () => {
-    if (window.suiWallet) {
+    const { adapter } = getWalletAdapter()
+
+    if (adapter) {
       const success = await connect()
       if (!success) {
         navigate('/wallet')

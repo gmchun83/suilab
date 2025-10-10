@@ -2,6 +2,7 @@ import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
 import { TransactionBlock } from '@mysten/sui.js/transactions'
 import { createContext, useContext } from 'react'
 import { CoinCreationParams } from '../types'
+import { getStoredWalletPreference, getWalletAdapter, type WalletId } from './walletAdapters'
 
 // Initialize Sui client
 const rpcUrl = import.meta.env.VITE_SUI_RPC_URL || getFullnodeUrl('testnet')
@@ -25,40 +26,50 @@ const MEME_COIN_PACKAGE = import.meta.env.VITE_MEME_COIN_PACKAGE || '0x123'; // 
 const DEX_INTEGRATION_PACKAGE = import.meta.env.VITE_DEX_INTEGRATION_PACKAGE || '0x456'; // Replace with actual package ID
 
 // Helper functions for wallet interactions
-export const connectWallet = async () => {
+const getActiveWallet = (preferredId?: WalletId) => {
+  const storedWallet = getStoredWalletPreference()
+  const { adapter } = getWalletAdapter(preferredId ?? storedWallet)
+
+  if (!adapter) {
+    throw new Error('Sui wallet not found. Please install a compatible wallet extension.')
+  }
+
+  return adapter
+}
+
+export const connectWallet = async (walletId?: WalletId) => {
   try {
-    // Check if wallet adapter is available
-    if (window.suiWallet) {
-      const response = await window.suiWallet.requestPermissions();
-      const accounts = await window.suiWallet.getAccounts();
+    const wallet = getActiveWallet(walletId)
 
-      if (accounts && accounts.length > 0) {
-        // Get the balance
-        const balance = await suiClient.getBalance({
-          owner: accounts[0]
-        });
+    if (wallet.requestPermissions) {
+      await wallet.requestPermissions()
+    }
 
-        return {
-          address: accounts[0],
-          balance: balance.totalBalance,
-        };
+    const accounts = await wallet.getAccounts()
+
+    if (accounts && accounts.length > 0) {
+      const balance = await suiClient.getBalance({
+        owner: accounts[0]
+      })
+
+      return {
+        address: accounts[0],
+        balance: balance.totalBalance
       }
     }
 
-    throw new Error('Sui wallet not found. Please install the Sui wallet extension.');
+    throw new Error('No accounts found in wallet')
   } catch (error) {
-    console.error('Error connecting wallet:', error);
-    throw error;
+    console.error('Error connecting wallet:', error)
+    throw error
   }
-};
+}
 
 export const createCoin = async (params: CoinCreationParams) => {
   try {
-    if (!window.suiWallet) {
-      throw new Error('Sui wallet not found');
-    }
+    const wallet = getActiveWallet()
 
-    const accounts = await window.suiWallet.getAccounts();
+    const accounts = await wallet.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error('No accounts found. Please connect your wallet first.');
     }
@@ -89,7 +100,7 @@ export const createCoin = async (params: CoinCreationParams) => {
     });
 
     // Sign and execute the transaction
-    const result = await window.suiWallet.signAndExecuteTransactionBlock({
+    const result = await wallet.signAndExecuteTransactionBlock({
       transactionBlock: tx,
     });
 
@@ -114,11 +125,9 @@ export const createCoin = async (params: CoinCreationParams) => {
 
 export const buyCoin = async (coinId: string, amount: string) => {
   try {
-    if (!window.suiWallet) {
-      throw new Error('Sui wallet not found');
-    }
+    const wallet = getActiveWallet()
 
-    const accounts = await window.suiWallet.getAccounts();
+    const accounts = await wallet.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error('No accounts found. Please connect your wallet first.');
     }
@@ -148,7 +157,7 @@ export const buyCoin = async (coinId: string, amount: string) => {
     });
 
     // Sign and execute the transaction
-    const result = await window.suiWallet.signAndExecuteTransactionBlock({
+    const result = await wallet.signAndExecuteTransactionBlock({
       transactionBlock: tx,
     });
 
@@ -166,11 +175,9 @@ export const buyCoin = async (coinId: string, amount: string) => {
 
 export const sellCoin = async (coinId: string, amount: string) => {
   try {
-    if (!window.suiWallet) {
-      throw new Error('Sui wallet not found');
-    }
+    const wallet = getActiveWallet()
 
-    const accounts = await window.suiWallet.getAccounts();
+    const accounts = await wallet.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error('No accounts found. Please connect your wallet first.');
     }
@@ -202,7 +209,7 @@ export const sellCoin = async (coinId: string, amount: string) => {
     });
 
     // Sign and execute the transaction
-    const result = await window.suiWallet.signAndExecuteTransactionBlock({
+    const result = await wallet.signAndExecuteTransactionBlock({
       transactionBlock: tx,
     });
 
@@ -217,21 +224,5 @@ export const sellCoin = async (coinId: string, amount: string) => {
     throw error;
   }
 };
-
-// Add type declaration for the Sui wallet
-declare global {
-  interface Window {
-    suiWallet?: {
-      requestPermissions: () => Promise<any>;
-      getAccounts: () => Promise<string[]>;
-      signAndExecuteTransactionBlock: (params: {
-        transactionBlock: TransactionBlock;
-      }) => Promise<{
-        digest: string;
-        [key: string]: any;
-      }>;
-    };
-  }
-}
 
 export default suiClient

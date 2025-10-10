@@ -1,108 +1,122 @@
-import { useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useCallback, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { RootState } from '../store'
 import {
   connectWalletStart,
   connectWalletSuccess,
   connectWalletFailure,
   disconnectWallet,
   updateBalance
-} from '../store/slices/walletSlice';
-import { suiClient } from '../utils/suiClient';
+} from '../store/slices/walletSlice'
+import { suiClient } from '../utils/suiClient'
+import {
+  getStoredWalletPreference,
+  getWalletAdapter,
+  WALLET_STORAGE_KEY,
+  type WalletId
+} from '../utils/walletAdapters'
 
 export const useWallet = () => {
-  const dispatch = useDispatch();
-  const { address, connected, balance, loading, error } = useSelector((state: RootState) => state.wallet);
+  const dispatch = useDispatch()
+  const { address, connected, balance, loading, error } = useSelector((state: RootState) => state.wallet)
+
+  const connect = useCallback(async (walletId?: WalletId) => {
+    try {
+      dispatch(connectWalletStart())
+
+      const storedWallet = getStoredWalletPreference()
+      const { id, adapter } = getWalletAdapter(walletId ?? storedWallet)
+
+      if (!adapter || !id) {
+        throw new Error('Sui wallet not found. Please install a compatible wallet extension.')
+      }
+
+      if (adapter.requestPermissions) {
+        await adapter.requestPermissions()
+      } else if (adapter.connect) {
+        await adapter.connect()
+      }
+
+      const accounts = await adapter.getAccounts()
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts found in wallet')
+      }
+
+      const balanceData = await suiClient.getBalance({
+        owner: accounts[0]
+      })
+
+      localStorage.setItem('walletConnected', 'true')
+      localStorage.setItem(WALLET_STORAGE_KEY, id)
+
+      dispatch(connectWalletSuccess({
+        address: accounts[0],
+        balance: balanceData.totalBalance
+      }))
+
+      return true
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      dispatch(connectWalletFailure(error instanceof Error ? error.message : 'Unknown error'))
+      return false
+    }
+  }, [dispatch])
 
   // Check for wallet on mount
   useEffect(() => {
     const checkWalletConnection = async () => {
-      if (window.suiWallet && localStorage.getItem('walletConnected') === 'true') {
+      if (typeof window === 'undefined') {
+        return
+      }
+
+      const storedWallet = getStoredWalletPreference()
+      const { id, adapter } = getWalletAdapter(storedWallet)
+      if (adapter && localStorage.getItem('walletConnected') === 'true') {
         try {
-          await connect();
+          await connect(id)
         } catch (error) {
-          console.error('Failed to reconnect wallet:', error);
+          console.error('Failed to reconnect wallet:', error)
         }
       }
-    };
+    }
 
-    checkWalletConnection();
-  }, []);
+    void checkWalletConnection()
+  }, [connect])
 
   // Refresh balance periodically
   useEffect(() => {
-    if (!connected || !address) return;
+    if (!connected || !address) return
 
     const refreshBalance = async () => {
       try {
         const balanceData = await suiClient.getBalance({
           owner: address
-        });
-        dispatch(updateBalance(balanceData.totalBalance));
+        })
+        dispatch(updateBalance(balanceData.totalBalance))
       } catch (error) {
-        console.error('Failed to refresh balance:', error);
+        console.error('Failed to refresh balance:', error)
       }
-    };
-
-    refreshBalance();
-    const intervalId = setInterval(refreshBalance, 30000); // Every 30 seconds
-
-    return () => clearInterval(intervalId);
-  }, [connected, address, dispatch]);
-
-  const connect = useCallback(async () => {
-    try {
-      dispatch(connectWalletStart());
-
-      if (!window.suiWallet) {
-        throw new Error('Sui wallet not found. Please install the Sui wallet extension.');
-      }
-
-      // Request wallet permissions
-      await window.suiWallet.requestPermissions();
-
-      // Get accounts
-      const accounts = await window.suiWallet.getAccounts();
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts found in wallet');
-      }
-
-      // Get the balance
-      const balanceData = await suiClient.getBalance({
-        owner: accounts[0]
-      });
-
-      // Store connection in local storage
-      localStorage.setItem('walletConnected', 'true');
-
-      // Update Redux state
-      dispatch(connectWalletSuccess({
-        address: accounts[0],
-        balance: balanceData.totalBalance
-      }));
-
-      return true;
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-      dispatch(connectWalletFailure(error instanceof Error ? error.message : 'Unknown error'));
-      return false;
     }
-  }, [dispatch]);
+
+    void refreshBalance()
+    const intervalId = setInterval(refreshBalance, 30000) // Every 30 seconds
+
+    return () => clearInterval(intervalId)
+  }, [connected, address, dispatch])
 
   const disconnect = useCallback(() => {
     try {
-      // Remove from local storage
-      localStorage.removeItem('walletConnected');
+      localStorage.removeItem('walletConnected')
+      localStorage.removeItem(WALLET_STORAGE_KEY)
 
-      // Update Redux state
-      dispatch(disconnectWallet());
-      return true;
+      dispatch(disconnectWallet())
+      return true
     } catch (error) {
-      console.error('Failed to disconnect wallet:', error);
-      return false;
+      console.error('Failed to disconnect wallet:', error)
+      return false
     }
-  }, [dispatch]);
+  }, [dispatch])
 
   return {
     address,
@@ -112,7 +126,7 @@ export const useWallet = () => {
     error,
     connect,
     disconnect
-  };
-};
+  }
+}
 
-export default useWallet;
+export default useWallet
