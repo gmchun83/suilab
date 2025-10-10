@@ -22,7 +22,7 @@ const resolveApiBaseUrl = () => {
     return `${protocol}//${hostname}${portSegment}/api`
   }
 
-  return 'http://localhost:3000/api'
+  return 'http://167.86.85.39:3000/api'
 }
 
 const API_URL = resolveApiBaseUrl()
