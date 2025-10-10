@@ -24,13 +24,97 @@ export const WALLET_STORAGE_KEY = 'walletProvider'
 
 const getWindow = () => (typeof window === 'undefined' ? undefined : window as ExtendedWindow)
 
+const isWalletAdapter = (adapter: unknown): adapter is WalletAdapter =>
+  Boolean(
+    adapter &&
+      typeof adapter === 'object' &&
+      typeof (adapter as WalletAdapter).getAccounts === 'function' &&
+      typeof (adapter as WalletAdapter).signAndExecuteTransactionBlock === 'function'
+  )
+
+const extractAdapter = (value: unknown): WalletAdapter | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  if (isWalletAdapter(value)) {
+    return value
+  }
+
+  if (typeof value !== 'object') {
+    return undefined
+  }
+
+  const container = value as Record<string, unknown>
+  const nestedKeys = ['wallet', 'suiWallet', 'adapter', 'default']
+
+  for (const key of nestedKeys) {
+    const nested = container[key]
+    if (!nested || nested === value) {
+      continue
+    }
+
+    const adapter = extractAdapter(nested)
+    if (adapter) {
+      return adapter
+    }
+  }
+
+  return undefined
+}
+
 const providerFactories: Record<WalletId, () => WalletAdapter | undefined> = {
-  'sui-wallet': () => getWindow()?.suiWallet,
-  'suiet-wallet': () => getWindow()?.suiet,
-  'ethos-wallet': () => getWindow()?.ethos?.suiWallet ?? getWindow()?.ethos,
-  'martian-wallet': () => getWindow()?.martian?.suiWallet ?? getWindow()?.martian,
-  'slush-wallet': () =>
-    getWindow()?.slush?.suiWallet ?? getWindow()?.slush?.wallet ?? getWindow()?.slushWallet,
+  'sui-wallet': () => extractAdapter(getWindow()?.suiWallet),
+  'suiet-wallet': () => {
+    const win = getWindow()
+    if (!win) {
+      return undefined
+    }
+
+    const candidates: unknown[] = [
+      win.suiet,
+      win.suietWallet,
+      win.suietwallet,
+      win['__SUIET__'],
+      win['__suiet__'],
+    ]
+
+    for (const candidate of candidates) {
+      const adapter = extractAdapter(candidate)
+      if (adapter) {
+        return adapter
+      }
+    }
+
+    return undefined
+  },
+  'ethos-wallet': () => extractAdapter(getWindow()?.ethos?.suiWallet ?? getWindow()?.ethos),
+  'martian-wallet': () => extractAdapter(getWindow()?.martian?.suiWallet ?? getWindow()?.martian),
+  'slush-wallet': () => {
+    const win = getWindow()
+    if (!win) {
+      return undefined
+    }
+
+    const candidates: unknown[] = [
+      win.slush,
+      win.slush?.suiWallet,
+      win.slush?.wallet,
+      win.slushWallet,
+      win.slushwallet,
+      win['__SLUSH__'],
+      win['__slush__'],
+    ]
+
+    for (const candidate of candidates) {
+      const adapter = extractAdapter(candidate)
+      if (adapter) {
+        return adapter
+      }
+    }
+
+    return undefined
+  },
 }
 
 const allWalletIds = Object.keys(providerFactories) as WalletId[]
@@ -88,6 +172,16 @@ export const getStoredWalletPreference = () => {
 type ExtendedWindow = Window & {
   suiWallet?: WalletAdapter
   suiet?: WalletAdapter
+  suietWallet?: WalletAdapter
+  suietwallet?: WalletAdapter
+  '__SUIET__'?: {
+    wallet?: WalletAdapter
+    suiWallet?: WalletAdapter
+  }
+  '__suiet__'?: {
+    wallet?: WalletAdapter
+    suiWallet?: WalletAdapter
+  }
   ethos?: WalletAdapter & {
     suiWallet?: WalletAdapter
   }
@@ -99,6 +193,15 @@ type ExtendedWindow = Window & {
     wallet?: WalletAdapter
   }
   slushWallet?: WalletAdapter
+  slushwallet?: WalletAdapter
+  '__SLUSH__'?: {
+    wallet?: WalletAdapter
+    suiWallet?: WalletAdapter
+  }
+  '__slush__'?: {
+    wallet?: WalletAdapter
+    suiWallet?: WalletAdapter
+  }
 }
 
 declare global {
