@@ -1,16 +1,12 @@
-import type { TransactionBlock } from '@mysten/sui.js/transactions'
+import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-wallet-standard'
+import { getWallets, type WalletAccount } from '@mysten/wallet-standard'
 
-export type WalletId =
-  | 'sui-wallet'
-  | 'suiet-wallet'
-  | 'ethos-wallet'
-  | 'martian-wallet'
-  | 'slush-wallet'
+export type WalletId = 'suiet-wallet' | 'slush-wallet'
 
 export interface WalletAdapter {
-  requestPermissions?: () => Promise<unknown>
-  hasPermissions?: () => Promise<unknown>
-  connect?: () => Promise<unknown>
+  connect: () => Promise<void>
+  disconnect?: () => Promise<void>
   getAccounts: () => Promise<string[]>
   signAndExecuteTransactionBlock: (params: {
     transactionBlock: TransactionBlock
@@ -20,33 +16,175 @@ export interface WalletAdapter {
   }>
 }
 
-export const WALLET_STORAGE_KEY = 'walletProvider'
-
-const getWindow = () => (typeof window === 'undefined' ? undefined : window as ExtendedWindow)
-
-const providerFactories: Record<WalletId, () => WalletAdapter | undefined> = {
-  'sui-wallet': () => getWindow()?.suiWallet,
-  'suiet-wallet': () => getWindow()?.suiet,
-  'ethos-wallet': () => getWindow()?.ethos?.suiWallet ?? getWindow()?.ethos,
-  'martian-wallet': () => getWindow()?.martian?.suiWallet ?? getWindow()?.martian,
-  'slush-wallet': () =>
-    getWindow()?.slush?.suiWallet ?? getWindow()?.slush?.wallet ?? getWindow()?.slushWallet,
+const walletMatchers: Record<WalletId, (name: string) => boolean> = {
+  'suiet-wallet': (name) => name.includes('suiet'),
+  'slush-wallet': (name) => name.includes('slush'),
 }
 
-const allWalletIds = Object.keys(providerFactories) as WalletId[]
+export const WALLET_STORAGE_KEY = 'walletProvider'
 
-export const getWalletAdapter = (preferredId?: WalletId) => {
-  const win = getWindow()
-  if (!win) {
-    return { id: undefined as WalletId | undefined, adapter: undefined as WalletAdapter | undefined }
+let walletRegistry: ReturnType<typeof getWallets> | null = null
+let standardProvider: WalletStandardAdapterProvider | null = null
+
+const getWalletRegistry = () => {
+  if (typeof window === 'undefined') {
+    return null
   }
 
-  const searchOrder = preferredId
-    ? [preferredId, ...allWalletIds.filter((id) => id !== preferredId)]
-    : allWalletIds
+  if (!walletRegistry) {
+    walletRegistry = getWallets()
+  }
 
-  for (const id of searchOrder) {
-    const adapter = providerFactories[id]()
+  return walletRegistry
+}
+
+const getStandardProvider = () => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  if (!standardProvider) {
+    standardProvider = new WalletStandardAdapterProvider()
+  }
+
+  return standardProvider
+}
+
+type StandardAdapter = {
+  name?: string
+  wallet?: { name?: string }
+  connect: () => Promise<void>
+  disconnect?: () => Promise<void>
+  getAccounts: () => Promise<(WalletAccount | string)[]>
+  signAndExecuteTransactionBlock?: (params: {
+    transactionBlock: TransactionBlock | Uint8Array
+    account?: WalletAccount
+    chain?: string
+    options?: Record<string, unknown>
+  }) => Promise<{ digest: string; [key: string]: unknown }>
+}
+
+const getAdapterName = (adapter: StandardAdapter) => (adapter.name ?? adapter.wallet?.name ?? '').toLowerCase()
+
+const getStandardAdapters = (): StandardAdapter[] => {
+  const provider = getStandardProvider()
+  if (!provider) {
+    return []
+  }
+
+  const providerWithAdapters = provider as unknown as {
+    getAdapters?: () => StandardAdapter[]
+    get?: () => StandardAdapter[]
+    wallets?: StandardAdapter[]
+  }
+
+  if (typeof providerWithAdapters.getAdapters === 'function') {
+    return providerWithAdapters.getAdapters() ?? []
+  }
+
+  if (typeof providerWithAdapters.get === 'function') {
+    return providerWithAdapters.get() ?? []
+  }
+
+  if (Array.isArray(providerWithAdapters.wallets)) {
+    return providerWithAdapters.wallets
+  }
+
+  return []
+}
+
+const wrapAdapter = (adapter: StandardAdapter): WalletAdapter => {
+  if (typeof adapter.connect !== 'function' || typeof adapter.getAccounts !== 'function') {
+    throw new Error('Wallet adapter is missing required methods.')
+  }
+
+  const getNormalizedAccounts = async () => {
+    const accounts = await adapter.getAccounts()
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts available in the connected wallet.')
+    }
+
+    return accounts.map((account) => {
+      if (typeof account === 'string') {
+        return { address: account, accountObject: undefined as WalletAccount | undefined }
+      }
+
+      return { address: account.address, accountObject: account }
+    })
+  }
+
+  return {
+    connect: () => adapter.connect(),
+    disconnect: adapter.disconnect ? () => adapter.disconnect!() : undefined,
+    getAccounts: async () => {
+      const normalized = await getNormalizedAccounts()
+      return normalized.map((entry) => entry.address)
+    },
+    signAndExecuteTransactionBlock: async ({ transactionBlock }) => {
+      if (typeof adapter.signAndExecuteTransactionBlock !== 'function') {
+        throw new Error('Wallet does not support signing transactions.')
+      }
+
+      const normalized = await getNormalizedAccounts()
+      const primary = normalized[0]
+      const params: Record<string, unknown> = {
+        transactionBlock,
+      }
+
+      if (primary.accountObject) {
+        params.account = primary.accountObject
+        if (primary.accountObject.chains?.length) {
+          params.chain = primary.accountObject.chains[0]
+        }
+      }
+
+      return adapter.signAndExecuteTransactionBlock(params as {
+        transactionBlock: TransactionBlock | Uint8Array
+        account?: WalletAccount
+        chain?: string
+        options?: Record<string, unknown>
+      })
+    },
+  }
+}
+
+const matchAdapterById = (adapter: StandardAdapter, id: WalletId) => {
+  const name = getAdapterName(adapter)
+  if (!name) {
+    return false
+  }
+
+  return walletMatchers[id](name)
+}
+
+const getAvailableAdapter = (id: WalletId) => {
+  const adapters = getStandardAdapters()
+  const matchingAdapter = adapters.find((adapter) => matchAdapterById(adapter, id))
+
+  if (!matchingAdapter) {
+    return undefined
+  }
+
+  try {
+    return wrapAdapter(matchingAdapter)
+  } catch (error) {
+    console.error('Failed to prepare wallet adapter', matchingAdapter?.name, error)
+    return undefined
+  }
+}
+
+const allWalletIds: WalletId[] = ['suiet-wallet', 'slush-wallet']
+
+export const getWalletProviderAdapters = () => {
+  const adapters = getStandardAdapters()
+  return adapters.filter((adapter) => allWalletIds.some((id) => matchAdapterById(adapter, id)))
+}
+
+export const getWalletAdapter = (preferredId?: WalletId) => {
+  const ids = preferredId ? [preferredId, ...allWalletIds.filter((id) => id !== preferredId)] : allWalletIds
+
+  for (const id of ids) {
+    const adapter = getAvailableAdapter(id)
     if (adapter) {
       return { id, adapter }
     }
@@ -55,23 +193,35 @@ export const getWalletAdapter = (preferredId?: WalletId) => {
   return { id: undefined as WalletId | undefined, adapter: undefined as WalletAdapter | undefined }
 }
 
+export const getWalletAdapterById = (id: WalletId) => {
+  const adapter = getAvailableAdapter(id)
+  return { id, adapter: adapter ?? undefined }
+}
+
 export const getWalletAvailability = () => {
   const availability: Record<WalletId, boolean> = {
-    'sui-wallet': false,
     'suiet-wallet': false,
-    'ethos-wallet': false,
-    'martian-wallet': false,
     'slush-wallet': false,
   }
 
-  const win = getWindow()
-  if (!win) {
+  const adapters = getStandardAdapters()
+  allWalletIds.forEach((id) => {
+    availability[id] = adapters.some((adapter) => matchAdapterById(adapter, id))
+  })
+
+  if (Object.values(availability).some((isAvailable) => isAvailable)) {
     return availability
   }
 
-  for (const id of allWalletIds) {
-    availability[id] = Boolean(providerFactories[id]())
+  const registry = getWalletRegistry()
+  if (!registry) {
+    return availability
   }
+
+  const wallets = registry.get()
+  allWalletIds.forEach((id) => {
+    availability[id] = availability[id] || wallets.some((wallet) => walletMatchers[id](wallet.name.toLowerCase()))
+  })
 
   return availability
 }
@@ -85,22 +235,48 @@ export const getStoredWalletPreference = () => {
   return stored ?? undefined
 }
 
-type ExtendedWindow = Window & {
-  suiWallet?: WalletAdapter
-  suiet?: WalletAdapter
-  ethos?: WalletAdapter & {
-    suiWallet?: WalletAdapter
+export const subscribeToWalletChanges = (listener: () => void) => {
+  const provider = getStandardProvider()
+  const registry = getWalletRegistry()
+
+  const unsubscribes: Array<() => void> = []
+
+  if (provider) {
+    const eventsApi = provider as unknown as { on?: (event: string, cb: () => void) => () => void }
+    if (typeof eventsApi.on === 'function') {
+      const offRegistered = eventsApi.on('walletRegistered', listener)
+      const offUnregistered = eventsApi.on('walletUnregistered', listener)
+      const offChanged = eventsApi.on('walletsChanged', listener)
+
+      offRegistered && unsubscribes.push(offRegistered)
+      offUnregistered && unsubscribes.push(offUnregistered)
+      offChanged && unsubscribes.push(offChanged)
+    }
   }
-  martian?: WalletAdapter & {
-    suiWallet?: WalletAdapter
+
+  if (registry) {
+    const eventsApi = registry as unknown as { on?: (event: string, cb: () => void) => () => void }
+    if (typeof eventsApi.on === 'function') {
+      const offRegister = eventsApi.on('register', listener)
+      const offUnregister = eventsApi.on('unregister', listener)
+      offRegister && unsubscribes.push(offRegister)
+      offUnregister && unsubscribes.push(offUnregister)
+    }
   }
-  slush?: WalletAdapter & {
-    suiWallet?: WalletAdapter
-    wallet?: WalletAdapter
+
+  if (!unsubscribes.length) {
+    return () => {}
   }
-  slushWallet?: WalletAdapter
+
+  return () => {
+    unsubscribes.forEach((unsubscribe) => {
+      try {
+        unsubscribe()
+      } catch (error) {
+        console.error('Failed to unsubscribe from wallet change listener', error)
+      }
+    })
+  }
 }
 
-declare global {
-  interface Window extends ExtendedWindow {}
-}
+export type { WalletAccount }
