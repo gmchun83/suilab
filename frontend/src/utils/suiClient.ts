@@ -41,9 +41,7 @@ export const connectWallet = async (walletId?: WalletId) => {
   try {
     const wallet = getActiveWallet(walletId)
 
-    if (wallet.requestPermissions) {
-      await wallet.requestPermissions()
-    }
+    await wallet.connect()
 
     const accounts = await wallet.getAccounts()
 

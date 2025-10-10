@@ -50,8 +50,7 @@ const FAQ: React.FC = () => {
     },
     {
       question: 'What wallets are supported?',
-      answer:
-        'We currently support Sui Wallet, Ethos Wallet, Suiet Wallet, Martian Wallet, and Slush Wallet. More wallet integrations are planned for the future.',
+      answer: 'We currently support Suiet Wallet and Slush Wallet via the latest Sui wallet standard. More wallet integrations are planned for the future.',
       category: 'wallets'
     },
     {

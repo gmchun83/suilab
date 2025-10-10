@@ -12,6 +12,7 @@ import { suiClient } from '../utils/suiClient'
 import {
   getStoredWalletPreference,
   getWalletAdapter,
+  getWalletAdapterById,
   WALLET_STORAGE_KEY,
   type WalletId
 } from '../utils/walletAdapters'
@@ -31,11 +32,7 @@ export const useWallet = () => {
         throw new Error('Sui wallet not found. Please install a compatible wallet extension.')
       }
 
-      if (adapter.requestPermissions) {
-        await adapter.requestPermissions()
-      } else if (adapter.connect) {
-        await adapter.connect()
-      }
+      await adapter.connect()
 
       const accounts = await adapter.getAccounts()
 
@@ -107,6 +104,12 @@ export const useWallet = () => {
 
   const disconnect = useCallback(() => {
     try {
+      const storedWallet = getStoredWalletPreference()
+      if (storedWallet) {
+        const { adapter } = getWalletAdapterById(storedWallet)
+        void adapter?.disconnect?.()
+      }
+
       localStorage.removeItem('walletConnected')
       localStorage.removeItem(WALLET_STORAGE_KEY)
 

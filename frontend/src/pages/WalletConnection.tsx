@@ -8,6 +8,7 @@ import {
   getStoredWalletPreference,
   getWalletAdapter,
   getWalletAvailability,
+  subscribeToWalletChanges,
   type WalletId
 } from '../utils/walletAdapters'
 
@@ -121,25 +122,12 @@ const WalletConnection: React.FC = () => {
       }
     }
 
-    const handleWalletReadyEvent = () => {
-      if (!runCheck()) {
-        startInterval()
-      }
-    }
-
-    const walletReadyEvents = [
-      'suiet#initialized',
-      'sui_wallet_initialized',
-      'ethos#initialized',
-      'martian#initialized',
-      'slush#initialized'
-    ] as const
+    const unsubscribe = subscribeToWalletChanges(() => {
+      runCheck()
+    })
 
     window.addEventListener('focus', handleFocus)
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    walletReadyEvents.forEach((eventName) => {
-      window.addEventListener(eventName, handleWalletReadyEvent)
-    })
 
     return () => {
       if (intervalId) {
@@ -147,9 +135,7 @@ const WalletConnection: React.FC = () => {
       }
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
-      walletReadyEvents.forEach((eventName) => {
-        window.removeEventListener(eventName, handleWalletReadyEvent)
-      })
+      unsubscribe()
     }
   }, [])
 
@@ -167,20 +153,6 @@ const WalletConnection: React.FC = () => {
   // Wallet options
   const walletOptions: WalletOption[] = useMemo(() => ([
     {
-      id: 'sui-wallet',
-      name: 'Sui Wallet',
-      icon: 'https://assets.website-files.com/61a9a8412ca7053e3ff6f2ef/6434d419cfb6b4a058d4cb2c_sui-favicon.svg',
-      description: 'The official wallet for the Sui blockchain',
-      available: walletAvailability['sui-wallet']
-    },
-    {
-      id: 'ethos-wallet',
-      name: 'Ethos Wallet',
-      icon: 'https://ethoswallet.xyz/assets/images/ethos-logo.svg',
-      description: 'A user-friendly wallet for Sui',
-      available: walletAvailability['ethos-wallet']
-    },
-    {
       id: 'suiet-wallet',
       name: 'Suiet Wallet',
       icon: 'https://suiet.app/favicon.ico',
@@ -193,13 +165,6 @@ const WalletConnection: React.FC = () => {
       icon: '/wallets/slush.svg',
       description: 'A lightweight Sui wallet focused on speed and simplicity',
       available: walletAvailability['slush-wallet']
-    },
-    {
-      id: 'martian-wallet',
-      name: 'Martian Wallet',
-      icon: 'https://martianwallet.xyz/assets/images/martian.png',
-      description: 'Multi-chain wallet with Sui support',
-      available: walletAvailability['martian-wallet']
     }
   ]), [walletAvailability])
 
@@ -269,9 +234,10 @@ const WalletConnection: React.FC = () => {
           </div>
         ) : (
           <div>
-            <p className="text-gray-700 mb-6">
-              Connect your wallet to create, buy, and sell meme coins on the Sui blockchain.
-            </p>
+              <p className="text-gray-700 mb-6">
+                Connect your wallet to create, buy, and sell meme coins on the Sui blockchain. We currently support Suiet
+                Wallet and Slush Wallet.
+              </p>
 
             {error && (
               <div className="bg-red-50 text-red-700 p-4 rounded-md mb-6">
@@ -282,31 +248,41 @@ const WalletConnection: React.FC = () => {
             <div className="space-y-4 mb-6">
               <h2 className="text-lg font-medium">Select a Wallet</h2>
 
-              {!walletDetected && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-yellow-800">No Compatible Wallet Detected</h3>
-                      <div className="mt-2 text-sm text-yellow-700">
-                        <p>You need to install a Sui-compatible wallet to use PumpSui. We recommend the official Sui Wallet.</p>
-                        <a
-                          href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block text-yellow-800 font-medium hover:text-yellow-900 underline"
-                        >
-                          Install Sui Wallet
-                        </a>
+                {!walletDetected && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-yellow-800">No Compatible Wallet Detected</h3>
+                        <div className="mt-2 text-sm text-yellow-700">
+                          <p>You need to install a supported wallet to use PumpSui. Suiet Wallet and Slush Wallet both implement the Sui wallet standard.</p>
+                          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                            <a
+                              href="https://suiet.app/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block text-yellow-800 font-medium hover:text-yellow-900 underline"
+                            >
+                              Visit Suiet Wallet
+                            </a>
+                            <a
+                              href="https://slushwallet.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-block text-yellow-800 font-medium hover:text-yellow-900 underline"
+                            >
+                              Visit Slush Wallet
+                            </a>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {walletOptions.map((wallet) => (
                 <div
@@ -328,7 +304,7 @@ const WalletConnection: React.FC = () => {
                     </div>
                     {!wallet.available ? (
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {wallet.id === 'sui-wallet' ? 'Not Installed' : 'Unavailable'}
+                        Not Installed
                       </span>
                     ) : (
                       <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
@@ -354,14 +330,24 @@ const WalletConnection: React.FC = () => {
                 Cancel
               </Button>
               {!walletDetected ? (
-                <a
-                  href="https://chrome.google.com/webstore/detail/sui-wallet/opcgpfmipidbgpenhmajoajpbobppdil"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 w-full sm:w-auto"
-                >
-                  Install Sui Wallet
-                </a>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <a
+                    href="https://suiet.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    Get Suiet Wallet
+                  </a>
+                  <a
+                    href="https://slushwallet.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    Get Slush Wallet
+                  </a>
+                </div>
               ) : (
                 <Button
                   onClick={handleConnect}
