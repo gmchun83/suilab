@@ -1,31 +1,10 @@
 import axios, { AxiosError } from 'axios'
 import { Coin, CoinDetails } from '../types'
 import { Transaction } from '../types'
+import { API_BASE_URL } from '../config/api'
 import { handleApiError, ApiError, NetworkError, TimeoutError } from './errorHandler'
 
-const resolveApiBaseUrl = () => {
-  const configuredUrl = import.meta.env.VITE_API_URL?.toString().trim()
-  if (configuredUrl) {
-    return configuredUrl
-  }
-
-  if (typeof window !== 'undefined') {
-    const { protocol, hostname, port } = window.location
-    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(hostname)
-
-    if (isLocalhost) {
-      const devPort = import.meta.env.VITE_API_DEV_PORT || '3000'
-      return `${protocol}//${hostname}:${devPort}/api`
-    }
-
-    const portSegment = port ? `:${port}` : ''
-    return `${protocol}//${hostname}${portSegment}/api`
-  }
-
-  return 'http://167.86.85.39:3000/api'
-}
-
-const API_URL = resolveApiBaseUrl()
+const API_URL = API_BASE_URL
 
 // Create axios instance with base configuration
 const api = axios.create({
