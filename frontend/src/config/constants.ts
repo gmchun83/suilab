@@ -1,6 +1,7 @@
+import { API_BASE_URL } from './api'
+
 // API endpoints
-export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://167.86.85.39:3000/api';
+export { API_BASE_URL }
 export const SUI_RPC_URL = import.meta.env.VITE_SUI_RPC_URL || 'https://fullnode.testnet.sui.io';
 
 // Pagination
