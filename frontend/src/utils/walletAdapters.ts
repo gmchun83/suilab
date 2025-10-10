@@ -1,6 +1,11 @@
 import type { TransactionBlock } from '@mysten/sui.js/transactions'
 
-export type WalletId = 'sui-wallet' | 'suiet-wallet' | 'ethos-wallet' | 'martian-wallet'
+export type WalletId =
+  | 'sui-wallet'
+  | 'suiet-wallet'
+  | 'ethos-wallet'
+  | 'martian-wallet'
+  | 'slush-wallet'
 
 export interface WalletAdapter {
   requestPermissions?: () => Promise<unknown>
@@ -24,6 +29,8 @@ const providerFactories: Record<WalletId, () => WalletAdapter | undefined> = {
   'suiet-wallet': () => getWindow()?.suiet,
   'ethos-wallet': () => getWindow()?.ethos?.suiWallet ?? getWindow()?.ethos,
   'martian-wallet': () => getWindow()?.martian?.suiWallet ?? getWindow()?.martian,
+  'slush-wallet': () =>
+    getWindow()?.slush?.suiWallet ?? getWindow()?.slush?.wallet ?? getWindow()?.slushWallet,
 }
 
 const allWalletIds = Object.keys(providerFactories) as WalletId[]
@@ -54,6 +61,7 @@ export const getWalletAvailability = () => {
     'suiet-wallet': false,
     'ethos-wallet': false,
     'martian-wallet': false,
+    'slush-wallet': false,
   }
 
   const win = getWindow()
@@ -86,6 +94,11 @@ type ExtendedWindow = Window & {
   martian?: WalletAdapter & {
     suiWallet?: WalletAdapter
   }
+  slush?: WalletAdapter & {
+    suiWallet?: WalletAdapter
+    wallet?: WalletAdapter
+  }
+  slushWallet?: WalletAdapter
 }
 
 declare global {

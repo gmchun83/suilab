@@ -28,7 +28,13 @@ export const CHART_COLORS = {
 };
 
 // Wallet
-export const SUPPORTED_WALLETS = ['Sui Wallet', 'Ethos Wallet', 'Suiet'];
+export const SUPPORTED_WALLETS = [
+  'Sui Wallet',
+  'Ethos Wallet',
+  'Suiet Wallet',
+  'Martian Wallet',
+  'Slush Wallet'
+];
 
 // Error messages
 export const ERROR_MESSAGES = {

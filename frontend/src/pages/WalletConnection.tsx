@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Card from '../components/common/Card'
 import Button from '../components/common/Button'
@@ -24,6 +24,11 @@ const WalletConnection: React.FC = () => {
   const { connected, address, balance, loading, error, connect, disconnect } = useWallet()
   const [selectedWallet, setSelectedWallet] = useState<WalletId | null>(null)
   const [walletAvailability, setWalletAvailability] = useState(() => getWalletAvailability())
+  const selectedWalletRef = useRef<WalletId | null>(null)
+
+  useEffect(() => {
+    selectedWalletRef.current = selectedWallet
+  }, [selectedWallet])
 
   const walletDetected = useMemo(
     () => Object.values(walletAvailability).some(Boolean),
@@ -32,22 +37,120 @@ const WalletConnection: React.FC = () => {
 
   // Check if wallet is available in the browser
   useEffect(() => {
-    const checkWalletAvailability = () => {
-      const availability = getWalletAvailability()
-      setWalletAvailability(availability)
+    if (typeof window === 'undefined') {
+      return
+    }
 
-      const storedPreference = getStoredWalletPreference()
-      const { id } = getWalletAdapter(storedPreference)
-
-      if (id) {
-        setSelectedWallet(id)
-      } else {
-        const firstAvailable = (Object.entries(availability).find(([, available]) => available) ?? [])[0] as WalletId | undefined
-        setSelectedWallet(firstAvailable ?? null)
+    const selectWallet = (walletId: WalletId | null) => {
+      if (selectedWalletRef.current !== walletId) {
+        setSelectedWallet(walletId)
       }
     }
 
-    checkWalletAvailability()
+    const updateAvailability = () => {
+      const availability = getWalletAvailability()
+      setWalletAvailability(availability)
+
+      const detected = Object.values(availability).some(Boolean)
+      const currentSelection = selectedWalletRef.current
+
+      if (currentSelection && availability[currentSelection]) {
+        return detected
+      }
+
+      const storedPreference = getStoredWalletPreference()
+
+      if (storedPreference && availability[storedPreference]) {
+        selectWallet(storedPreference)
+        return detected
+      }
+
+      const { id } = getWalletAdapter(storedPreference)
+
+      if (id && availability[id]) {
+        selectWallet(id)
+        return detected
+      }
+
+      const firstAvailable = (Object.entries(availability).find(([, available]) => available) ?? [])[0] as
+        | WalletId
+        | undefined
+
+      selectWallet(firstAvailable ?? null)
+      return detected
+    }
+
+    let attempts = 0
+    const maxAttempts = 10
+    let intervalId: number | undefined
+
+    const runCheck = () => updateAvailability()
+
+    const startInterval = () => {
+      if (intervalId) {
+        return
+      }
+
+      attempts = 0
+      intervalId = window.setInterval(() => {
+        attempts += 1
+        const detected = runCheck()
+
+        if (detected || attempts >= maxAttempts) {
+          if (intervalId) {
+            window.clearInterval(intervalId)
+            intervalId = undefined
+          }
+        }
+      }, 1000)
+    }
+
+    if (!runCheck()) {
+      startInterval()
+    }
+
+    const handleFocus = () => {
+      if (!runCheck()) {
+        startInterval()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !runCheck()) {
+        startInterval()
+      }
+    }
+
+    const handleWalletReadyEvent = () => {
+      if (!runCheck()) {
+        startInterval()
+      }
+    }
+
+    const walletReadyEvents = [
+      'suiet#initialized',
+      'sui_wallet_initialized',
+      'ethos#initialized',
+      'martian#initialized',
+      'slush#initialized'
+    ] as const
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    walletReadyEvents.forEach((eventName) => {
+      window.addEventListener(eventName, handleWalletReadyEvent)
+    })
+
+    return () => {
+      if (intervalId) {
+        window.clearInterval(intervalId)
+      }
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      walletReadyEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, handleWalletReadyEvent)
+      })
+    }
   }, [])
 
   // Redirect to home if already connected
@@ -83,6 +186,13 @@ const WalletConnection: React.FC = () => {
       icon: 'https://suiet.app/favicon.ico',
       description: 'A comprehensive wallet for Sui ecosystem',
       available: walletAvailability['suiet-wallet']
+    },
+    {
+      id: 'slush-wallet',
+      name: 'Slush Wallet',
+      icon: '/wallets/slush.svg',
+      description: 'A lightweight Sui wallet focused on speed and simplicity',
+      available: walletAvailability['slush-wallet']
     },
     {
       id: 'martian-wallet',
