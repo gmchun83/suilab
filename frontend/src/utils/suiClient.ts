@@ -1,5 +1,5 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { TransactionBlock } from '@mysten/sui/transactions'
 import { createContext, useContext } from 'react'
 import { CoinCreationParams } from '../types'
 import { getStoredWalletPreference, getWalletAdapter, type WalletId } from './walletAdapters'

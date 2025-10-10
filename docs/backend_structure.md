@@ -305,7 +305,7 @@ export default router;
 - Subscribe to Sui WebSocket API for events like `create_coin`, `trade`, `burn`.
 - Example:
 ```typescript
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 
 const client = new SuiClient({ url: process.env.SUI_RPC_URL });
 
@@ -499,7 +499,7 @@ export const getCoins = async (req: Request, res: Response) => {
 
 ### 14.3 Sample Indexer Listener
 ```typescript
-import { SuiClient } from '@mysten/sui.js/client';
+import { SuiClient } from '@mysten/sui/client';
 import { processEvent } from './processors/eventProcessor';
 
 const client = new SuiClient({ url: process.env.SUI_RPC_URL });

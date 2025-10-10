@@ -225,7 +225,7 @@ meme-coin-platform/
     - `indexer.test.ts`: Tests event processing logic.
     - `services.test.ts`: Tests DEX and notification services.
 - **.env.example**: Environment variables (e.g., `DATABASE_URL`, `SUI_RPC_URL`).
-- **package.json**: Backend dependencies (e.g., `express`, `prisma`, `@mysten/sui.js`).
+- **package.json**: Backend dependencies (e.g., `express`, `prisma`, `@mysten/sui`).
 - **tsconfig.json**: TypeScript configuration for Node.js.
 - **prisma/**: Prisma ORM configuration.
   - `schema.prisma`: Database schema for coins and transactions.
@@ -289,7 +289,7 @@ meme-coin-platform/
     - `coinCreation.spec.ts`: Tests coin creation flow.
     - `trading.spec.ts`: Tests buy/sell flow.
 - **.env.example**: Environment variables (e.g., `VITE_SUI_RPC_URL`).
-- **package.json**: Frontend dependencies (e.g., `react`, `@mysten/sui.js`, `tailwindcss`).
+- **package.json**: Frontend dependencies (e.g., `react`, `@mysten/sui`, `tailwindcss`).
 - **tsconfig.json**: TypeScript configuration for React.
 - **vite.config.ts**: Vite configuration for development and build.
 - **tailwind.config.js**: Tailwind CSS configuration.
@@ -437,7 +437,7 @@ REDIS_URL=redis://localhost:6379
 ## 8. Integration Points
 
 - **Frontend ↔ Backend**: Frontend uses `api.ts` to call backend APIs (`/api/coins`, `/api/transactions`).
-- **Frontend ↔ Blockchain**: `suiClient.ts` interacts with Sui blockchain via `@mysten/sui.js` for wallet connections and transactions.
+- **Frontend ↔ Blockchain**: `suiClient.ts` interacts with Sui blockchain via `@mysten/sui` for wallet connections and transactions.
 - **Backend ↔ Blockchain**: `suiListener.ts` uses Sui WebSocket API to index events; `dexService.ts` integrates with Cetus DEX.
 - **Contracts ↔ Blockchain**: `meme_coin.move` and `dex_integration.move` deployed to Sui testnet/mainnet via `deploy.sh`.
 

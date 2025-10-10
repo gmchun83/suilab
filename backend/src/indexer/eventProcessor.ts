@@ -1,4 +1,4 @@
-import { SuiEvent } from '@mysten/sui.js/client'
+import { SuiEvent } from '@mysten/sui/client'
 import { PrismaClient } from '@prisma/client'
 import logger from '../utils/logger'
 import notificationService from '../services/notificationService'

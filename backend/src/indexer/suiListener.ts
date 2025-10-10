@@ -1,5 +1,5 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
-import { SuiEvent } from '@mysten/sui.js/client'
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { SuiEvent } from '@mysten/sui/client'
 import logger from '../utils/logger'
 import eventProcessor from './eventProcessor'
 

@@ -1,6 +1,6 @@
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client'
-import { TransactionBlock } from '@mysten/sui.js/transactions'
-import { bcs } from '@mysten/sui.js/bcs'
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client'
+import { TransactionBlock } from '@mysten/sui/transactions'
+import { bcs } from '@mysten/sui/bcs'
 import { logger } from '../utils/logger'
 import { prisma } from '../config'
 

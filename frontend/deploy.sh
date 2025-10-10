@@ -26,7 +26,7 @@ cat > deploy/package.json << EOF
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mysten/sui.js": "^0.42.0",
+    "@mysten/sui": "^0.54.1",
     "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.5.0",
     "chart.js": "^4.4.0",

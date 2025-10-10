@@ -165,7 +165,7 @@ Grok 3 can be accessed via:
 
 **Example Specific Prompt**:
 ```
-Generate a TypeScript function in `frontend/src/utils/suiClient.ts` to connect a Sui wallet using @mysten/sui.js, handle errors, and update Redux state with the wallet address. Include type definitions and Jest tests.
+Generate a TypeScript function in `frontend/src/utils/suiClient.ts` to connect a Sui wallet using @mysten/sui, handle errors, and update Redux state with the wallet address. Include type definitions and Jest tests.
 ```
 
 ## 5. AI-Driven Workflows
@@ -217,7 +217,7 @@ Below are sample prompts tailored to the Meme Coin Launch Platform, categorized 
 
 ### 6.1 Frontend Development
 ```
-Generate a React.js component `WalletButton.tsx` in TypeScript for connecting/disconnecting a Sui wallet using @mysten/sui.js. Use Tailwind CSS for styling, Redux Toolkit for state management, and include Jest tests. Place it in `frontend/src/components/`.
+Generate a React.js component `WalletButton.tsx` in TypeScript for connecting/disconnecting a Sui wallet using @mysten/sui. Use Tailwind CSS for styling, Redux Toolkit for state management, and include Jest tests. Place it in `frontend/src/components/`.
 ```
 
 ### 6.2 Backend Development
@@ -286,9 +286,9 @@ Generate a TypeScript utility function `suiClient.ts` for connecting to a Sui wa
 **Output** (simplified):
 ```typescript
 // frontend/src/utils/suiClient.ts
-import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
-import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
+import { SuiClient, getFullnodeUrl } from '@mysten/sui/client';
+import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519';
+import { TransactionBlock } from '@mysten/sui/transactions';
 
 interface CoinMetadata {
   name: string;

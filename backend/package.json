@@ -20,7 +20,7 @@
     "test:repositories": "jest src/tests/unit/repositories --no-cache --detectOpenHandles"
   },
   "dependencies": {
-    "@mysten/sui.js": "^0.42.0",
+    "@mysten/sui": "^0.54.1",
     "@prisma/client": "^5.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",

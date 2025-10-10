@@ -1,4 +1,4 @@
-import { TransactionBlock } from '@mysten/sui.js/transactions'
+import { TransactionBlock } from '@mysten/sui/transactions'
 import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-wallet-standard'
 import { getWallets, type WalletAccount } from '@mysten/wallet-standard'
 
